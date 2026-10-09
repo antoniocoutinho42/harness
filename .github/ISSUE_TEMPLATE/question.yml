@@ -1,35 +1,35 @@
-name: Question
-description: Ask a how-to or clarification question about Harness
+name: Pergunta
+description: Faça uma pergunta de uso ou peça esclarecimentos sobre o Harness
 title: "[question] "
 labels: ["question", "needs-triage"]
 body:
   - type: markdown
     attributes:
       value: |
-        Questions are welcome. If your question is open-ended or invites discussion, [GitHub Discussions](https://github.com/revfactory/harness/discussions) is usually a better venue.
+        Perguntas são bem-vindas. Para dúvidas abertas ou que convidem à discussão, o [GitHub Discussions](https://github.com/revfactory/harness/discussions) costuma ser mais adequado.
 
-        We try to triage questions within 48h.
+        Procuramos fazer a triagem de perguntas em até 48 horas.
 
   - type: textarea
     id: question
     attributes:
-      label: Your question
-      description: What would you like to know?
+      label: Sua pergunta
+      description: O que você gostaria de saber?
     validations:
       required: true
 
   - type: textarea
     id: tried
     attributes:
-      label: What have you tried?
-      description: Commands run, docs read, related issues you've already found.
+      label: O que você já tentou?
+      description: Comandos executados, documentação consultada e issues relacionadas.
     validations:
       required: false
 
   - type: textarea
     id: docs
     attributes:
-      label: Related docs / links (optional)
-      description: Paste links to sections of the README, docs, or issues you've already read.
+      label: Documentação ou links relacionados (opcional)
+      description: Inclua links para seções de README, documentação ou issues que você já consultou.
     validations:
       required: false
