@@ -1,62 +1,62 @@
-name: Feature request
-description: Propose a new capability or enhancement for Harness
+name: Solicitação de funcionalidade
+description: Proponha uma nova capacidade ou melhoria para o Harness
 title: "[feat] "
 labels: ["enhancement", "needs-discussion"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for the idea. Features take a bit of back-and-forth — please help us with the "why" before the "what".
+        Obrigado pela sugestão. Novas funcionalidades normalmente exigem discussão; ajude-nos a entender o motivo antes de definir a solução.
 
-        For anything RFC-sized (new pattern family, runtime support, breaking API), consider starting in [GitHub Discussions](https://github.com/revfactory/harness/discussions) first.
+        Para propostas de maior alcance (como um novo padrão de arquitetura, suporte a outro runtime ou mudanças incompatíveis de API), considere começar pelo [GitHub Discussions](https://github.com/revfactory/harness/discussions).
 
   - type: textarea
     id: problem
     attributes:
-      label: What problem does this solve?
-      description: Describe the user or engineering pain point. Concrete scenario preferred.
+      label: Que problema essa proposta resolve?
+      description: Descreva uma dificuldade concreta do usuário ou do desenvolvimento.
       placeholder: |
-        When I scaffold a team for ___, I end up manually ___ because ___.
+        Ao montar uma equipe para ___, preciso ___ manualmente porque ___.
     validations:
       required: true
 
   - type: textarea
     id: proposal
     attributes:
-      label: Proposed solution
-      description: Your idea for fixing it. Sketch API / CLI / workflow if relevant.
+      label: Solução proposta
+      description: Descreva sua proposta. Inclua um esboço de API, CLI ou workflow, se pertinente.
     validations:
       required: true
 
   - type: textarea
     id: alternatives
     attributes:
-      label: Alternatives considered
-      description: What other approaches did you think about, and why did you not pick them?
+      label: Alternativas consideradas
+      description: Quais outras abordagens você avaliou e por que não as escolheu?
     validations:
       required: false
 
   - type: dropdown
     id: related-pattern
     attributes:
-      label: Related team-architecture pattern (if any)
-      description: Which of the 6 built-in patterns is this most relevant to?
+      label: Padrão de arquitetura de equipe relacionado (se houver)
+      description: A qual dos seis padrões internos a proposta está mais relacionada?
       options:
-        - "Not pattern-specific"
+        - "Não se aplica a um padrão específico"
         - "Pipeline"
         - "Fan-out / Fan-in"
-        - "Expert Pool"
-        - "Producer–Reviewer"
+        - "Pool de Especialistas"
+        - "Produção–Revisão"
         - "Supervisor"
-        - "Hierarchical Delegation"
-        - "A new pattern (please describe below)"
+        - "Delegação Hierárquica"
+        - "Novo padrão (descreva abaixo)"
     validations:
       required: true
 
   - type: textarea
     id: additional
     attributes:
-      label: Additional context (optional)
-      description: Links, prior art, screenshots, anything else.
+      label: Contexto adicional (opcional)
+      description: Links, trabalhos relacionados, capturas de tela ou outras informações.
     validations:
       required: false
