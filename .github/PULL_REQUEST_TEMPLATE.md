@@ -1,58 +1,58 @@
 <!--
-Thanks for sending a PR! Please fill in the sections below so reviewers can move fast.
+Obrigado por abrir um pull request! Preencha os campos abaixo para facilitar a análise.
 
-See CONTRIBUTING.md for branch naming, commit conventions, and SLAs.
+Consulte CONTRIBUTING.md para conhecer as convenções de branches, commits e prazos de resposta.
 -->
 
-## Summary
+## Resumo
 
-<!-- 2–4 sentences: what does this PR change, and why now? -->
+<!-- Em 2 a 4 frases, explique o que este PR altera e por quê. -->
 
-## Motivation
+## Motivação
 
-<!-- Link the issue, RFC, or research note that motivated this. If none, a 1-line rationale is fine. -->
+<!-- Indique a issue, RFC ou nota de pesquisa que motivou a alteração. Se não houver, uma justificativa breve basta. -->
 
-- Closes #
-- Related to #
+- Resolve #
+- Relacionado a #
 
-## Scope of change
+## Escopo da alteração
 
-<!-- Tick whichever boxes apply. Leave the rest unchecked. -->
+<!-- Marque somente as opções aplicáveis. -->
 
-- [ ] Skill / meta-skill logic
-- [ ] Agent template(s)
-- [ ] Plugin manifest (`.claude-plugin/plugin.json`, `marketplace.json`)
-- [ ] Documentation (`README.md`, `README_KO.md`, `README_JA.md`, `docs/`)
+- [ ] Lógica de skill/metaskill
+- [ ] Modelos de agentes
+- [ ] Manifesto do plugin (`.claude-plugin/plugin.json`, `marketplace.json`)
+- [ ] Documentação (`README.md`, `README_KO.md`, `README_JA.md`, `docs/`)
 - [ ] `CHANGELOG.md`
 - [ ] CI / GitHub Actions
-- [ ] Tests
-- [ ] Other (describe):
+- [ ] Testes
+- [ ] Outro (descreva):
 
-## Tests
+## Testes
 
-<!-- What did you run locally? Paste output or describe. -->
+<!-- Quais testes foram executados localmente? Inclua os resultados ou descreva a verificação. -->
 
-- [ ] `npx markdownlint '**/*.md'` passes
-- [ ] Manual repro of the change works as expected
-- [ ] New unit / integration tests added (if applicable)
-- [ ] N/A — explain below
+- [ ] `npx markdownlint '**/*.md'` passou
+- [ ] Reprodução manual da alteração funcionou conforme esperado
+- [ ] Novos testes unitários ou de integração adicionados (se aplicável)
+- [ ] Não se aplica — explique abaixo
 
-## CHANGELOG update
+## Atualização do CHANGELOG
 
-<!-- Every user-visible change must land in CHANGELOG.md under the Unreleased section. -->
+<!-- Toda alteração visível ao usuário deve constar na seção Unreleased de CHANGELOG.md. -->
 
-- [ ] Yes — added to `CHANGELOG.md`
-- [ ] No — this change is not user-visible (docs-only / internal refactor)
+- [ ] Sim — adicionei o registro em `CHANGELOG.md`
+- [ ] Não — alteração não visível ao usuário (apenas documentação ou refatoração interna)
 
-## SemVer impact
+## Impacto na versão (SemVer)
 
-<!-- See CONTRIBUTING.md § Commit Message Convention. Choose one. -->
+<!-- Consulte CONTRIBUTING.md § Commit Message Convention. Escolha uma opção. -->
 
-- [ ] **Patch** — bug fix, no API change (`fix:`)
-- [ ] **Minor** — additive, backward-compatible (`feat:`)
-- [ ] **Major** — breaking change (`feat!:` or `BREAKING CHANGE:` in commit footer)
-- [ ] **None** — docs / chore / refactor / test
+- [ ] **Patch** — correção de bug sem alteração de API (`fix:`)
+- [ ] **Minor** — funcionalidade adicional compatível (`feat:`)
+- [ ] **Major** — alteração incompatível (`feat!:` ou `BREAKING CHANGE:` no rodapé do commit)
+- [ ] **Nenhum** — documentação, manutenção, refatoração ou teste
 
-## Additional notes
+## Observações adicionais
 
-<!-- Screenshots, migration notes, follow-ups, things you want reviewers to focus on. -->
+<!-- Capturas de tela, orientações de migração, próximos passos e pontos que merecem atenção na revisão. -->

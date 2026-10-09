@@ -1,405 +1,404 @@
 ---
 name: harness
-description: "프로젝트에 맞는 하네스를 설계하고, 전문 에이전트와 각 에이전트가 사용할 스킬을 만든다. 사용자가 '하네스 구성해줘', '하네스 구축해줘', '하네스 설계', '하네스 엔지니어링', '에이전트 팀 만들어줘'라고 요청할 때 사용한다. 새로운 분야나 프로젝트의 자동화 체계를 구축하거나 기존 하네스를 재구성·확장할 때도 사용한다. '하네스 점검', '하네스 감사', '하네스 현황', '에이전트/스킬 동기화'처럼 기존 하네스를 운영하거나 유지 보수하는 요청에도 사용한다. 실행 결과를 회고하고 피드백을 반영하는 작업에는 harness:evolve 스킬을 사용한다."
+description: "Projeta, cria, audita e amplia harnesses para projetos, definindo agentes especializados e as skills que eles utilizam. Acione quando o usuário pedir 'crie um harness', 'estruture um harness', 'desenhe um harness multiagente', 'planeje uma equipe de agentes', 'organize a orquestração dos agentes' ou quando precisar estruturar a automação de um domínio. Use também para 'audite o harness', 'revise a arquitetura', 'verifique a configuração', 'sincronize agentes e skills' e manutenção de harnesses existentes. Para aprender com execuções anteriores e incorporar feedback ao harness já existente, use harness:evolve."
 ---
 
-# Harness v2 — 에이전트 팀과 스킬 설계
+# Harness v2 — Projeto de equipes de agentes e skills
 
-프로젝트에 맞는 하네스를 설계한다. 각 에이전트의 역할을 정의하고, 에이전트가 작업할 때 따를 스킬을 만든다.
+Projete um harness adequado ao projeto. Defina os papéis dos agentes e as skills que orientam como cada agente deve trabalhar.
 
-## 핵심 원칙
+## Princípios essenciais
 
-1. 에이전트 정의는 `프로젝트/.claude/agents/`에, 스킬은 `프로젝트/.claude/skills/`에 만든다. 에이전트에는 누가 일하는지를, 스킬에는 그 일을 어떻게 하는지를 적는다.
-2. 작업 흐름에 따라 실행 모드를 고른다. 순서와 반복 조건을 코드로 정할 수 있으면 워크플로로 조율한다. 같은 전문가와 피드백을 주고받아야 하면 지속형 에이전트를 쓴다. 결과를 한 번만 받으면 되는 작업은 서브에이전트에 맡긴다. 자세한 선택 기준은 2단계에서 다룬다.
-3. 업무의 복잡도, 작업 기간, 자율성, 응답 속도에 맞춰 모델을 고른다. 계획을 세워 장기간 자율적으로 실행해야 하는 최고 난도 업무에는 fable, 설계·코드 생성·복잡한 분석·교차 검증에는 opus, 로그 분석·형식 변환·단순 수집 같은 일상 업무에는 sonnet을 쓴다. 자세한 기준은 3단계에서 다룬다.
-4. 새 세션에서도 오케스트레이터 스킬을 불러올 수 있도록 `CLAUDE.md`에 호출 조건과 변경 이력만 기록한다.
-5. 실행 결과에서 배운 내용을 에이전트·스킬·`CLAUDE.md`에 계속 반영한다. 회고하고 변경 사항을 찾아내는 작업은 `harness:evolve` 스킬이 맡는다.
-6. 생성하는 에이전트 정의, 스킬, 오케스트레이터, `CLAUDE.md` 기록은 사용자가 대화에 쓰는 언어로 작성한다. 이 스킬 문서와 `references/`의 템플릿이 한국어로 쓰였다는 이유로 산출물을 한국어로 쓰지 않는다. 템플릿의 제목과 예시 문구도 그 언어로 옮긴다. 사용자가 언어를 따로 정하면 그 언어를 따르고, 따로 정하지 않은 채 기존 하네스를 확장하면 기존 파일의 언어를 따른다.
+1. Crie as definições dos agentes em `<projeto>/.claude/agents/` e as skills em `<projeto>/.claude/skills/`. O agente define **quem executa**; a skill define **como executar**.
+2. Escolha o modo de execução conforme o fluxo: se ordem e condições de repetição puderem ser expressas em código, orquestre por workflow; se especialistas precisarem iterar e trocar feedback, use agentes persistentes; se bastar um resultado pontual, delegue a subagentes. Consulte a fase 2.
+3. Escolha os modelos segundo complexidade, duração, autonomia e latência. Use fable para trabalhos de altíssima complexidade que exijam planejamento autônomo prolongado; opus para arquitetura, programação, análises complexas e verificação cruzada; sonnet para atividades rotineiras como análise de logs, conversão de formatos e coleta simples. Consulte a fase 3.
+4. Registre em `CLAUDE.md` **somente** as condições de acionamento e o histórico de alterações, para que a skill orquestradora seja descoberta em novas sessões.
+5. Reutilize aprendizados de execução para aprimorar agentes, skills e `CLAUDE.md`. A revisão dos resultados e incorporação de feedback cabem à skill `harness:evolve`.
+6. Escreva definições de agentes, skills, orquestradores e registros em `CLAUDE.md` no idioma da conversa com o usuário. Traduza também títulos e textos ilustrativos dos modelos de referência. Se o usuário escolher outro idioma, respeite-o; ao ampliar um harness existente sem orientação linguística explícita, mantenha o idioma dos arquivos existentes. O idioma deste documento não determina o idioma dos artefatos.
 
-## 진행 절차
+## Procedimento
 
-### 0단계: 현재 상태 점검
+### Fase 0 — Auditar a configuração atual
 
-하네스 스킬을 불러오면 기존 구성을 먼저 확인한다.
+Antes de criar ou modificar qualquer coisa, avalie o que o projeto já possui.
 
-1. `프로젝트/.claude/agents/`, `프로젝트/.claude/skills/`, `프로젝트/CLAUDE.md`를 읽는다.
-2. 현재 상태에 따라 진행할 절차를 고른다.
-   - **새로 구축**: 에이전트나 스킬 디렉터리가 없거나 비어 있으면 1단계부터 모두 실행한다.
-   - **기존 구성 확장**: 기존 하네스에 에이전트나 스킬을 추가해야 하면 아래 표에서 필요한 단계만 실행한다.
-   - **운영·유지 보수**: 기존 하네스를 점검·수정·동기화해야 하면 7단계의 운영 절차로 이동한다.
+1. Examine `<projeto>/.claude/agents/`, `<projeto>/.claude/skills/` e `<projeto>/CLAUDE.md`.
+2. Defina o tipo de trabalho:
+   - **Criar:** se os diretórios de agentes e skills estiverem ausentes ou vazios, execute todas as fases a partir da fase 1.
+   - **Ampliar:** se for necessário acrescentar agentes ou skills, execute somente as fases relevantes segundo a tabela.
+   - **Manter:** se a solicitação for auditar, corrigir ou sincronizar um harness existente, siga os procedimentos de manutenção da fase 7.
 
-   | 변경 내용 | 1단계 | 2단계 | 3단계 | 4단계 | 5단계 | 6단계 |
-   | --- | --- | --- | --- | --- | --- | --- |
-   | 에이전트 추가 | 생략하고 0단계 결과 사용 | 어떤 실행 모드에서 어느 팀과 단계에 둘지만 결정 | 필수 | 전용 스킬이 필요할 때 | 오케스트레이터 수정 | 필수 |
-   | 스킬 추가·수정 | 생략 | 생략 | 생략 | 필수 | 연결이 바뀔 때 | 필수 |
-   | 구조·실행 모드 변경 | 생략 | 필수 | 영향을 받는 에이전트만 | 영향을 받는 스킬만 | 필수 | 필수 |
+   | Alteração | Fase 1 | Fase 2 | Fase 3 | Fase 4 | Fase 5 | Fase 6 |
+   |---|---|---|---|---|---|---|
+   | Acrescentar agente | Usar a auditoria da fase 0 | Definir a equipe e fase de execução | Obrigatória | Se precisar de skill específica | Ajustar orquestrador | Obrigatória |
+   | Acrescentar/alterar skill | Dispensável | Dispensável | Dispensável | Obrigatória | Se as conexões mudarem | Obrigatória |
+   | Alterar arquitetura ou modo | Dispensável | Obrigatória | Somente agentes afetados | Somente skills afetadas | Obrigatória | Obrigatória |
 
-3. 기존 오케스트레이터에 `TeamCreate`, `TeamDelete`, `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`가 있으면 v1 산출물이다. 현재 실행 환경에서는 작동하지 않으므로 v2로 옮기자고 제안한다. 자세한 방법은 `references/execution-modes.md`의 「v1에서 v2로 전환」을 따른다.
-4. 실제 에이전트·스킬 목록과 `CLAUDE.md` 기록을 대조해 불일치를 찾는다.
-5. 점검 결과와 실행 계획을 사용자에게 알리고 확인받는다.
+3. Se um orquestrador contiver `TeamCreate`, `TeamDelete` ou `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` como dependências operacionais, ele possui artefatos da v1 incompatíveis com o runtime atual. Proponha a migração para a v2 conforme `references/execution-modes.md`, seção “Migração da v1 para a v2”.
+4. Compare os agentes e skills existentes com o registro de `CLAUDE.md` e identifique divergências.
+5. Apresente o diagnóstico e o plano de execução ao usuário e obtenha confirmação.
 
-### 1단계: 분야와 작업 분석
+### Fase 1 — Analisar o domínio e as tarefas
 
-1. 사용자 요청에서 프로젝트의 분야와 목표를 파악한다.
-2. 생성, 검증, 편집, 분석처럼 필요한 작업의 종류를 나눈다.
-3. 실행 모드를 고를 수 있도록 작업 흐름을 확인한다.
-   - 처리할 목록을 미리 나열할 수 있는가? 예: 파일 N개를 옮기거나 관점 M개를 검토하는 작업
-   - 산출물을 검증하고 다시 고치는 반복 절차가 필요한가?
-   - 에이전트가 서로 의견을 주고받아야 결과가 좋아지는가?
-   - 한 세션 안에서 같은 전문가와 계속 대화해야 하는가?
-4. 0단계에서 확인한 기존 에이전트·스킬과 겹치거나 충돌하는 부분을 찾는다.
-5. 코드베이스를 살펴 기술 스택, 데이터 모델, 주요 모듈을 파악한다.
-6. 사용자가 쓰는 용어와 질문 수준을 보고 설명의 난이도를 맞춘다. 코딩 경험이 적은 사용자에게 검증 조건(assertion), JSON 스키마(JSON Schema) 같은 용어를 설명 없이 쓰지 않는다.
+1. Identifique a área de atuação e o objetivo do projeto a partir do pedido.
+2. Separe os tipos de trabalho: criação, verificação, edição, análise e outros necessários.
+3. Entenda o fluxo para escolher o modo de execução:
+   - É possível enumerar antecipadamente as tarefas? Exemplo: processar N arquivos ou examinar M perspectivas.
+   - O resultado exige ciclos de verificação e correção?
+   - O trabalho melhora quando agentes trocam mensagens e discutem suas conclusões?
+   - O mesmo especialista precisa manter contexto e participar de várias interações na sessão?
+4. Identifique sobreposições e conflitos com agentes e skills encontrados na fase 0.
+5. Examine código, stack tecnológica, modelos de dados e módulos principais do projeto.
+6. Ajuste o nível de explicação à familiaridade técnica do usuário. Não use termos como *assertion* ou *JSON Schema* sem explicar quando o usuário não tiver experiência técnica.
 
-### 2단계: 실행 모드와 팀 구조 설계
+### Fase 2 — Definir modo de execução e arquitetura de equipe
 
-#### 2-1. 실행 모드 선택
+#### 2.1. Escolher o modo de execução
 
-Harness v2는 Claude Code의 멀티에이전트 기능 세 가지를 사용한다. 작업 흐름에 맞춰 다음 모드 가운데 하나를 고른다.
+O Harness v2 utiliza três mecanismos multiagentes do Claude Code:
 
-| 실행 모드 | 사용하는 기능 | 알맞은 작업 |
-| --- | --- | --- |
-| **워크플로 조율** | `Workflow` 스크립트의 `agent()`, `pipeline()`, `parallel()`, `phase()` | 처리 목록, 검증 절차, 반복 횟수를 코드로 정할 수 있는 작업. 스키마에 맞춘 결과가 필요하거나 `Agent`를 수십 번 이상 호출해야 하는 작업 |
-| **지속형 에이전트 협업** | `Agent(name:)`, `SendMessage`, `TaskCreate`, `TaskUpdate` | 이름 있는 전문가가 대화 맥락을 유지하면서 피드백·협상·공동 편집을 반복해야 하는 작업 |
-| **서브에이전트 위임** | `Agent` 한 번 호출. 기본적으로 백그라운드에서 실행하며 병렬 호출 가능 | 에이전트끼리 대화할 필요가 없고 결과만 한 번 받으면 되는 작업 |
+| Modo | Recursos | Casos adequados |
+|---|---|---|
+| **Orquestração por workflow** | Scripts `Workflow` com `agent()`, `pipeline()`, `parallel()` e `phase()` | Tarefas enumeráveis; regras de verificação e repetição expressas em código; saídas validadas por schema; dezenas de chamadas `Agent` |
+| **Colaboração entre agentes persistentes** | `Agent(name:)`, `SendMessage`, `TaskCreate`, `TaskUpdate` | Especialistas nomeados que preservam contexto e precisam trocar feedback, negociar ou trabalhar juntos por várias interações |
+| **Delegação a subagentes** | Uma chamada `Agent` por trabalho, normalmente em segundo plano e passível de paralelização | Trabalhos pontuais e independentes, sem necessidade de conversa entre agentes |
 
-다음 순서로 결정한다.
+Siga esta ordem de decisão:
 
-1. 처리 목록, 검증 기준, 반복 조건을 미리 코드로 표현할 수 있으면 워크플로를 사용한다. 정해진 흐름을 모델의 그때그때 판단에 맡기지 않아야 같은 방식으로 다시 실행할 수 있다.
-2. 코드로 정하기 어렵고, 에이전트끼리 대화하거나 이전 맥락을 기억해야 하면 지속형 에이전트를 사용한다.
-3. 두 조건에 해당하지 않고 결과만 필요하면 서브에이전트에 맡긴다.
-4. 단계마다 작업 성격이 다르면 혼합 모드로 구성한다. 오케스트레이터에 각 단계의 실행 모드를 적는다.
+1. Se tarefas, critérios de verificação e condições de repetição puderem ser especificados antecipadamente em código, use workflow. Não delegue ao julgamento improvisado do modelo a ordem de um fluxo que pode ser determinístico.
+2. Se não for possível codificar o fluxo e houver necessidade de discussão entre agentes ou preservação de contexto, use agentes persistentes.
+3. Se nenhuma das condições anteriores se aplicar e bastar obter um resultado, use subagentes.
+4. Se etapas distintas exigirem comportamentos diferentes, combine modos e identifique explicitamente o modo utilizado em cada fase do orquestrador.
 
-`Workflow` 도구를 쓰려면 사용자가 명시적으로 동의해야 한다. 사용자가 직접 워크플로 실행을 요청했거나, `Workflow` 호출을 지시하는 오케스트레이터 스킬을 사용자가 불러왔다면 동의한 것으로 본다. 기본 실행은 에이전트 몇 명으로 제한하고, 사용자가 "철저히", "전수"처럼 넓은 조사를 요구했을 때만 대규모로 늘린다.
+O uso da ferramenta `Workflow` exige autorização explícita do usuário. Considere essa autorização concedida se ele tiver solicitado diretamente a execução do workflow ou acionado uma skill orquestradora que instrua expressamente chamar `Workflow`. Limite a escala inicial a poucos agentes e amplie somente se o usuário solicitar uma investigação abrangente ou exaustiva.
 
-> 실행 모드 비교와 동시 실행 상한, 스키마, 토큰 예산, 재개 조건은 `references/execution-modes.md`에서 확인한다.
+> Veja limites de concorrência, comparação de modos, schemas, orçamentos de tokens e condições de retomada em `references/execution-modes.md`.
 
-#### 2-2. 팀 구성 방식 선택
+#### 2.2. Selecionar o padrão de equipe
 
-1. 작업을 전문 분야별로 나눈다.
-2. 아래 여섯 가지 방식 가운데 작업에 맞는 구성을 고른다. 자세한 기준은 `references/team-patterns.md`에 있다.
-   - **파이프라인**: 앞 단계의 결과를 받아 순서대로 처리한다. `pipeline()`에 알맞다.
-   - **분산·통합(팬아웃/팬인)**: 독립 작업을 병렬로 처리한 뒤 결과를 합친다. `pipeline()`과 필요할 때만 `parallel()`을 쓴다.
-   - **전문가 풀**: 입력에 맞는 전문가만 골라 호출한다. 서브에이전트나 지속형 에이전트에 알맞다.
-   - **생성·검증**: 한 에이전트가 만들고 다른 에이전트가 검토한다. 워크플로의 적대적 검증이나 지속형 에이전트 한 쌍을 쓴다.
-   - **감독자**: 중앙 에이전트가 진행 상황을 보고 작업을 다시 배분한다. 지속형 에이전트와 공유 작업 목록을 쓴다.
-   - **계층형 위임**: 상위 에이전트가 하위 에이전트에 다시 맡긴다. 두 단계 안에서만 사용하고, 워크플로 중첩은 한 단계로 제한한다.
-3. 산출물의 정확성이 중요하면 다음 검증 방식을 조합한다.
-   - **적대적 검증**: 찾은 항목 한 건마다 N명의 적대적 검증 에이전트를 붙이고, 과반이 근거가 충분하다고 `confirmed`로 판정한 항목만 통과시킨다. `refuted`나 `uncertain` 판정은 통과로 세지 않는다.
-   - **심사위원단**: N개의 시안을 따로 만든 뒤 병렬로 심사하고, 가장 좋은 시안을 바탕으로 최종본을 만든다.
-   - **새 항목이 없을 때까지 반복(Loop-until-dry)**: 새로 찾은 항목이 K회 연속 0건이 될 때까지 탐색한다.
-   - **여러 기준으로 탐색**: 컨테이너, 내용, 개체, 시간처럼 서로 다른 기준으로 병렬 조사한다.
-   - **누락 검토자**: 마지막 에이전트에는 빠진 내용만 찾게 한다.
+1. Divida o trabalho por especialidade.
+2. Selecione um dos seis padrões abaixo, conforme o tipo de tarefa. Consulte `references/team-patterns.md` para os critérios detalhados.
+   - **Pipeline:** uma etapa utiliza o resultado da anterior; adequado a `pipeline()`.
+   - **Fan-out/Fan-in:** tarefas independentes são executadas em paralelo e consolidadas depois; combine `pipeline()` com `parallel()` somente quando necessário.
+   - **Pool de Especialistas:** apenas os especialistas relevantes à entrada são acionados; adequado a subagentes ou agentes persistentes.
+   - **Produção–Revisão:** um agente produz e outro avalia; use verificação adversarial em workflow ou uma dupla de agentes persistentes.
+   - **Supervisor:** agente central acompanha o avanço e redistribui tarefas; adequado a agentes persistentes e lista compartilhada.
+   - **Delegação Hierárquica:** agentes de nível superior delegam para níveis inferiores; limite a hierarquia a dois níveis e o aninhamento de workflows a um nível.
+3. Para resultados em que precisão e completude sejam críticas, combine mecanismos de qualidade:
+   - **Verificação adversarial:** para cada item encontrado, convoque N verificadores adversariais; aprove como `confirmed` somente se a maioria concluir que há evidência suficiente. `refuted` e `uncertain` não contam como confirmação.
+   - **Painel de avaliadores:** produza N versões independentes, avalie-as em paralelo e elabore a resposta final a partir da melhor.
+   - **Busca até esgotamento (*loop-until-dry*):** continue pesquisando até ocorrerem K iterações consecutivas sem novos itens.
+   - **Varredura por múltiplos critérios:** examine em paralelo perspectivas diferentes, como estrutura, conteúdo, entidades e datas.
+   - **Revisor de omissões:** reserve a revisão final a um agente cuja tarefa seja encontrar exclusivamente o que ficou faltando.
 
-#### 2-3. 에이전트를 나누는 기준
+#### 2.3. Quando separar agentes
 
-필요한 전문 지식, 병렬 처리 가능 여부, 유지해야 할 대화 맥락, 다시 쓸 가능성을 기준으로 에이전트를 나눈다. 자세한 표는 `references/team-patterns.md`의 「에이전트 분리 기준」에서 확인한다.
+Divida papéis considerando conhecimento especializado, possibilidade de execução paralela, necessidade de preservar contexto e potencial de reutilização. Consulte a seção “Critérios para separar agentes” de `references/team-patterns.md`.
 
-### 3단계: 에이전트 정의 작성
+### Fase 3 — Criar as definições dos agentes
 
-여러 세션에서 재사용할 전문 에이전트는 `프로젝트/.claude/agents/{name}.md` 파일로 정의한다. 반복해서 사용할 역할을 `Agent` 도구의 `prompt`에만 직접 넣지 않는다.
+Defina os especialistas reutilizáveis em `<projeto>/.claude/agents/{name}.md`. Não deixe um papel recorrente definido apenas no campo `prompt` de uma chamada `Agent`.
 
-- 파일로 정의해야 다음 세션에서도 재사용할 수 있다. `Agent` 도구에서는 `subagent_type: "{name}"`, `Workflow`에서는 `agentType: "{name}"`으로 부른다.
-- 에이전트가 주고받을 내용을 미리 정해야 협업 결과가 안정적이다.
-- 에이전트에는 누가 일하는지를, 스킬에는 그 일을 어떻게 하는지를 적어 서로 섞이지 않게 한다.
+- A definição em arquivo permite reutilização em sessões futuras. Acione-a por `subagent_type: "{name}"` na ferramenta `Agent` ou `agentType: "{name}"` em `Workflow`.
+- Defina antecipadamente os contratos de troca de informações para estabilizar a colaboração.
+- Mantenha clara a separação entre papel do agente (**quem faz**) e skill (**como faz**).
 
-재사용할 전문가 역할은 사용자 정의 유형으로 파일에 만들고, 호출할 때 그 파일의 이름을 `subagent_type`이나 `agentType`에 지정한다. `general-purpose`, `Explore`, `Plan` 같은 기본 제공 유형을 그대로 쓰는 단발 작업에는 별도 정의 파일을 만들지 않는다.
+Crie definições personalizadas apenas para especialistas recorrentes. Se um trabalho pontual puder usar um tipo nativo (`general-purpose`, `Explore`, `Plan`), não crie um arquivo desnecessário.
 
-#### 기존 에이전트와 겹치는지 확인
+#### Conferir sobreposição com agentes existentes
 
-새 에이전트 파일을 만들기 전에 `프로젝트/.claude/agents/`의 기존 에이전트와 역할이 겹치는지 확인한다. 1단계를 생략하고 에이전트만 추가할 때도 이 확인은 건너뛰지 않는다. 하네스를 여러 번 구축하거나 확장하면 같은 역할의 에이전트가 이름만 달리해 쌓일 수 있기 때문이다. 겹치면 새 이름으로 만들지 말고 기존 에이전트를 그대로 쓰거나 확장한다. 판단 기준과 예외(도메인을 의도적으로 특화한 경우)는 `references/team-patterns.md`의 「에이전트 재사용 설계」에서 확인한다.
+Antes de criar um agente, verifique se algum arquivo em `<projeto>/.claude/agents/` já define papel semelhante. Faça essa verificação mesmo ao adicionar um agente sem repetir a fase 1. Execuções sucessivas podem acumular agentes com nomes diferentes e funções equivalentes. Reutilize ou amplie o agente existente, salvo se a especialização de domínio justificar a separação. Consulte “Reutilizar agentes”, em `references/team-patterns.md`.
 
-#### 모델 선택 기준
+#### Escolher o modelo por agente
 
-업무의 복잡도, 작업 기간, 자율성, 응답 속도를 기준으로 에이전트마다 모델을 고른다. YAML 프론트매터(머리말)의 `model:`이나 호출 인자인 `model`, `opts.model`에 지정하고, 선택 이유를 에이전트 정의나 오케스트레이터에 주석으로 남긴다.
+Considere complexidade, duração, autonomia e latência. Defina o modelo no frontmatter YAML (`model:`) ou na chamada (`model`, `opts.model`). Registre a justificativa na definição ou no orquestrador.
 
-| 모델 | 선택 기준 | 대표 업무 |
-| --- | --- | --- |
-| **fable** | 스스로 계획하고 여러 단계를 연결해 장기간 자율적으로 실행해야 하는 최고 난도 업무 | 에이전트 조율, 계획 수립과 장기 실행, 방대한 자료 통합, 막연한 아이디어 구체화 |
-| **opus** | 범위는 분명하지만 깊은 추론과 분석이 필요한 전문 업무 | 설계·아키텍처, 코드 생성, 복잡한 분석, 교차 검증, 연구 방법 비판, 창작 |
-| **sonnet** | 절차가 분명하고 빠른 처리가 중요한 일상 업무 | 로그 분석, 형식 변환, 정적 파일 검사, 배포 스크립트 실행, 단순 수집, 일반 글쓰기·요약 |
+| Modelo | Quando utilizar | Exemplos de tarefas |
+|---|---|---|
+| **fable** | Atividades de complexidade excepcional, em que o agente planeja e conduz autonomamente várias etapas por períodos prolongados | Orquestração de agentes, planejamento de longo prazo, integração de grande volume de informações e estruturação de problemas abertos |
+| **opus** | Trabalhos especializados com escopo definido e forte exigência de raciocínio | Arquitetura, programação, análises complexas, verificação cruzada, crítica metodológica e criação |
+| **sonnet** | Trabalhos rotineiros com procedimento definido, sensíveis a velocidade e custo | Logs, conversão de formatos, inspeção estática de arquivos, scripts de deploy, coleta simples, redação e resumos comuns |
 
-- 앞 단계의 결과에 따라 다음 계획을 바꾸며 장기간 자율적으로 실행해야 하면 fable을 쓴다. 범위가 정해진 문제 하나를 깊이 분석하면 opus를 쓴다. 예를 들어 논문 한 편을 깊이 비판하는 작업에는 opus, 논문 수십 편을 검토해 전략과 보고서까지 만드는 작업에는 fable이 알맞다.
-- 판단이 애매한 일반 업무에는 sonnet을 기본값으로 쓴다.
-- 에이전트가 중요하다는 이유만으로 모두 fable이나 opus로 지정하지 않는다. 모델은 에이전트의 위상이 아니라 실제 업무 성격으로 고른다.
-- 계획과 조율을 맡는 상위 에이전트에 fable을 썼더라도, 하위 작업자는 각 업무에 맞는 모델을 따로 고른다.
+- Prefira fable quando a estratégia precisar ser redefinida autonomamente à medida que fases anteriores produzam resultados. Prefira opus para examinar em profundidade um problema bem delimitado; por exemplo, criticar um artigo científico específico. Para sintetizar dezenas de artigos e construir uma estratégia e um relatório de forma autônoma, considere fable.
+- Use sonnet como padrão para tarefas rotineiras ambíguas.
+- Não imponha fable ou opus a todos os agentes apenas pela importância hierárquica deles; escolha pela natureza do trabalho.
+- Mesmo que um agente supervisor use fable, avalie separadamente os modelos dos especialistas subordinados.
 
-> 모델별 자세한 기준은 `references/model-selection-guide.md`에서 확인한다.
+> Critérios completos em `references/model-selection-guide.md`.
 
-#### 정의 파일에 넣을 내용
+#### Conteúdo obrigatório das definições
 
-YAML 프론트매터에는 `name`과 `description`을 반드시 넣는다. 필요하면 사용할 도구를 제한하는 `tools`와 모델을 바꾸는 `model`을 추가한다. 읽기 전용 검토·분석 에이전트의 `tools`에서는 Edit와 Write를 빼서 파일을 바꾸지 못하게 한다.
+Inclua `name` e `description` no frontmatter YAML. Se necessário, restrinja ferramentas em `tools` ou selecione um modelo em `model`. Para agentes que apenas revisam ou analisam, retire Edit e Write de `tools` para evitar alterações de arquivos.
 
-반대로 산출물을 고치는 에이전트에는 Write와 함께 Edit도 준다. Edit가 없으면 한 줄을 고칠 때도 파일 전체를 다시 써야 하므로, 산출물이 크면 에이전트가 수정을 포기하고 우회한다. 또 `tools`에 적은 도구가 실행할 때 주어지지 않은 사례가 있으므로, 지속형 에이전트에게는 첫 보고에서 실제로 쓸 수 있는 도구 목록을 알리게 한다.
+Já os agentes que **modificam** artefatos precisam de Edit **e** Write. Sem Edit, pequenas correções exigem reescrever arquivos inteiros, podendo levar o agente a abandonar a alteração ou improvisar um desvio. Como ferramentas declaradas em `tools` podem não ser carregadas em determinados runtimes, peça aos agentes persistentes que informem em seu primeiro relatório quais ferramentas estão efetivamente disponíveis.
 
-본문에는 핵심 역할, 작업 원칙, 입력·출력 규칙, 오류 처리, 협업 방법을 반드시 적는다. 지속형 에이전트에는 `## 통신 규칙`을 추가해 `SendMessage`를 주고받을 대상과 공유 작업 목록 사용법을 정한다.
+No corpo da definição, descreva papel central, princípios de trabalho, contratos de entrada e saída, tratamento de erros e forma de colaboração. Para agentes persistentes, acrescente `## Regras de comunicação`, indicando destinatários de `SendMessage` e o uso da lista compartilhada de tarefas.
 
-> 정의 템플릿, 전체 예시, `tools`를 제한할 때 주의할 점은 `references/team-patterns.md`의 「에이전트 정의 구조」에서 확인한다.
+> Estrutura completa, exemplos e cuidados ao restringir `tools`: `references/team-patterns.md`, seção “Estrutura da definição de agentes”.
 
-#### QA 에이전트를 둘 때
+#### Incluir um agente de QA
 
-- QA 에이전트에는 모든 검증 도구를 쓸 수 있는 유형을 지정한다. `Explore`는 읽기 전용이라 검증 스크립트를 실행할 수 없다.
-- 파일 존재 여부만 확인하지 않는다. API 응답과 프런트엔드 훅의 응답 구조를 대조한다.
-- 전체 작업이 끝난 뒤 한 번만 검사하지 않는다. 모듈을 완성할 때마다 바로 검사한다.
-- 자세한 방법은 `references/qa-agent-guide.md`를 따른다.
+- Use um tipo com acesso a todas as ferramentas necessárias à validação. `Explore` é somente leitura e não executa scripts de teste.
+- Não limite a verificação à presença de arquivos: compare, por exemplo, a estrutura da resposta de APIs com o formato esperado pelos hooks do frontend.
+- Valide cada módulo assim que estiver pronto; não concentre todos os testes no final.
+- Consulte `references/qa-agent-guide.md`.
 
-### 4단계: 스킬 작성
+### Fase 4 — Criar as skills
 
-각 에이전트가 따를 스킬을 `프로젝트/.claude/skills/{name}/SKILL.md`에 만든다. 자세한 작성법은 `references/skill-writing-guide.md`를 따른다.
+Escreva as instruções de cada agente em `<projeto>/.claude/skills/{name}/SKILL.md` conforme `references/skill-writing-guide.md`.
 
-#### 4-0. 기존 스킬과 겹치는지 확인
+#### 4.0. Verificar skills já existentes
 
-새 스킬을 만들기 전에 `프로젝트/.claude/skills/`의 기존 스킬과 기능이 겹치는지 확인한다. 겹치면 새 이름으로 만들지 말고 기존 스킬을 에이전트에 연결하거나 확장한다. 판단 기준과 예외(도메인을 의도적으로 특화한 경우), 어디까지 일반화할지는 `references/skill-writing-guide.md`의 「스킬 재사용 설계」에서 확인한다.
+Antes de criar uma skill, procure capacidades equivalentes em `<projeto>/.claude/skills/`. Se houver sobreposição, conecte a skill existente ao novo agente ou amplie-a. Consulte os critérios e as exceções para especialização em “Projetar skills reutilizáveis”, em `references/skill-writing-guide.md`.
 
-#### 4-1. 디렉터리 구조
+#### 4.1. Estrutura de diretórios
 
-```
+```text
 skill-name/
-├── SKILL.md              # 필수
-│   ├── YAML 프론트매터   # name과 description 필수
-│   └── Markdown 본문
-├── scripts/              # 선택: 반복하거나 결과가 항상 같아야 하는 작업의 실행 코드
-├── references/           # 선택: 필요할 때만 읽는 참조 문서
-└── assets/               # 선택: 템플릿, 이미지처럼 산출물에 쓰는 파일
+├── SKILL.md              # obrigatório
+│   ├── Frontmatter YAML  # name e description obrigatórios
+│   └── Corpo Markdown
+├── scripts/              # opcional: código para tarefas repetitivas ou determinísticas
+├── references/           # opcional: documentos carregados somente quando necessários
+└── assets/               # opcional: modelos, imagens e outros recursos do resultado
 ```
 
-#### 4-2. description에 호출 조건 쓰기
+#### 4.2. Definir condições de acionamento na description
 
-Claude는 스킬의 `name`과 `description`을 보고 어떤 스킬을 불러올지 판단한다. 이 가운데 `description`에는 스킬이 하는 일과 사용해야 하는 상황을 구체적으로 적고, 비슷해 보이지만 사용하면 안 되는 경우도 구분한다.
+O Claude decide qual skill utilizar a partir de `name` e `description`. Explique claramente na `description` o que a skill faz, quando ela deve ser usada e quais situações semelhantes pertencem a outra ferramenta ou skill.
 
-**나쁜 예:** `"PDF 문서를 처리하는 스킬"`
+**Ruim:** `"Skill para processar documentos PDF."`
 
-**좋은 예:** `"PDF 파일 읽기, 텍스트·표 추출, 병합, 분할, 회전, 워터마크, 암호화, OCR 등 PDF 작업을 수행한다. 사용자가 .pdf 파일을 언급하거나 PDF 산출물을 요청하면 반드시 사용한다."`
+**Bom:** `"Lê arquivos PDF, extrai texto e tabelas, mescla, separa, gira páginas, aplica marca d'água, criptografa e realiza OCR. Use quando o usuário mencionar um arquivo .pdf ou solicitar um resultado em PDF."`
 
-#### 4-3. 본문 작성 원칙
+#### 4.3. Princípios para redigir skills
 
-| 원칙 | 적용 방법 |
-| --- | --- |
-| **이유부터 설명한다** | `ALWAYS`, `NEVER`만 나열하지 말고 왜 필요한 규칙인지 밝힌다. 이유를 알아야 예외 상황에서도 올바르게 판단할 수 있다. |
-| **간결하게 쓴다** | `SKILL.md`는 500줄 미만으로 유지한다. 판단에 도움이 되지 않는 내용은 지우거나 `references/`로 옮긴다. |
-| **원리로 일반화한다** | 특정 예시에만 맞는 규칙을 만들지 않는다. 여러 입력에 적용할 수 있는 판단 기준을 적는다. |
-| **반복 코드는 미리 넣는다** | 테스트할 때 여러 에이전트가 같은 스크립트를 다시 작성한다면 `scripts/`에 넣는다. |
-| **지시문으로 쓴다** | `~한다`나 `~하라` 가운데 문서에 맞는 한 가지 어미를 골라 통일한다. 해야 할 행동이 분명하게 드러나야 한다. |
+| Princípio | Como aplicar |
+|---|---|
+| **Explique o motivo** | Em vez de listar ordens `ALWAYS` e `NEVER`, justifique as regras para permitir decisões corretas em exceções. |
+| **Seja conciso** | Mantenha `SKILL.md` com menos de 500 linhas. Remova conteúdo que não ajude a decidir ou transfira detalhes para `references/`. |
+| **Generalize pelos princípios** | Não crie regras que só funcionem para o exemplo apresentado; descreva critérios aplicáveis a várias entradas. |
+| **Inclua código repetitivo previamente** | Se vários agentes recriarem o mesmo script nos testes, centralize-o em `scripts/`. |
+| **Use instruções inequívocas** | Adote um estilo verbal consistente, como “Verifique”, “Defina” e “Registre”, deixando clara a ação esperada. |
 
-#### 4-4. 필요한 정보만 단계별로 불러오기
+#### 4.4. Carregar informações progressivamente
 
-스킬은 필요한 정보와 실행 코드를 다음 시점에 불러온다.
+Carregue cada tipo de recurso somente quando necessário:
 
-| 정보 | 불러오는 시점 | 권장 분량 |
-| --- | --- | --- |
-| **메타데이터**(`name`, `description`) | 항상 | 약 100단어 |
-| **`SKILL.md` 본문** | 스킬을 불러올 때 | 500줄 미만 |
-| **`references/`** | 해당 자료가 필요할 때 | 제한 없음 |
-| **`scripts/`** | 반복 작업이나 결과가 항상 같아야 하는 작업을 실행할 때 | 제한 없음. 내용을 읽지 않고 바로 실행할 수 있음 |
+| Recurso | Quando carregar | Tamanho recomendado |
+|---|---|---|
+| **Metadados** (`name`, `description`) | Sempre | Cerca de 100 palavras |
+| **Corpo de `SKILL.md`** | Quando a skill for acionada | Menos de 500 linhas |
+| **`references/`** | Somente quando as referências forem necessárias | Sem limite fixo |
+| **`scripts/`** | Quando precisar de trabalho repetitivo ou determinístico | Sem limite; pode executar sem ler todo o código |
 
-- `SKILL.md`가 500줄에 가까워지면 세부 내용을 `references/`로 옮기고, 본문에는 언제 어떤 파일을 읽을지 적는다.
-- 참조 문서가 300줄을 넘으면 문서 위쪽에 목차를 넣는다.
-- 분야나 프레임워크마다 지침이 다르면 참조 문서를 나눠 필요한 파일만 읽게 한다.
+- Ao se aproximar de 500 linhas, transfira detalhes para `references/` e explique no corpo quando consultar cada arquivo.
+- Adicione um sumário a referências com mais de 300 linhas.
+- Separe orientações específicas de domínio ou framework em arquivos distintos, carregando somente as referências pertinentes.
 
-#### 4-5. 에이전트와 스킬 연결
+#### 4.5. Relacionar agentes e skills
 
-- 에이전트 한 명이 스킬 한 개 이상을 사용할 수 있다.
-- 여러 에이전트가 같은 스킬을 공유할 수 있다.
-- 스킬에는 일하는 방법을, 에이전트에는 그 일을 맡는 역할을 적는다.
+- Um agente pode usar várias skills.
+- Vários agentes podem compartilhar a mesma skill.
+- A skill estabelece o método; a definição do agente, o responsável.
 
-### 5단계: 통합하고 실행 순서 정하기
+### Fase 5 — Integrar os agentes e ordenar a execução
 
-오케스트레이터도 스킬이다. 개별 에이전트와 스킬을 하나의 작업 흐름으로 묶고, 누가 언제 어떤 순서로 협업하는지 정한다. 모드별 전체 템플릿은 `references/orchestrator-template.md`, 워크플로 스크립트 예시는 `references/workflow-recipes.md`에 있다.
+O orquestrador também é uma skill. Ele conecta agentes e métodos em um fluxo, especificando quem executa cada etapa, quando e em que ordem. Consulte os modelos por modo em `references/orchestrator-template.md` e os exemplos de scripts em `references/workflow-recipes.md`.
 
-기존 하네스를 확장할 때는 오케스트레이터를 새로 만들지 말고 기존 파일을 고친다. 에이전트를 추가하면 구성, 작업 배정, 데이터 전달 순서에 반영하고 `description`에도 새 호출 조건을 넣는다.
+Ao ampliar um harness existente, modifique seu orquestrador, em vez de criar outro. Ao adicionar agentes, atualize a composição da equipe, a distribuição de tarefas, a transferência de dados e os gatilhos na `description`.
 
-#### 5-0. 실행 모드별 오케스트레이터
+#### 5.0. Orquestradores por modo
 
-**A. 워크플로 조율**
+**A. Orquestração por workflow**
 
-오케스트레이터 스킬에 `Workflow` 스크립트를 정의한다. 스크립트는 `meta`, `phase()`, `pipeline()`, `parallel()`, `agent()`로 구성한다. 사용자 정의 유형은 `agentType`으로 지정하고, 스키마에 맞춘 결과는 `schema`로 받는다.
+Defina um script `Workflow` na skill orquestradora, utilizando `meta`, `phase()`, `pipeline()`, `parallel()` e `agent()`. Defina agentes personalizados por `agentType` e receba resultados validados por `schema`.
 
-```
-[오케스트레이터 스킬] → Workflow(script)
-    ├── phase('수집'): pipeline(items, ...)   ← 미리 정한 목록을 분산 처리
-    ├── phase('검증'): 적대적 검증 또는 심사위원단
-    └── return 구조화된 결과 → 메인이 종합 보고서 작성
-```
-
-**B. 지속형 에이전트 협업**
-
-이름 있는 에이전트를 실행한 뒤 공유 작업 목록과 `SendMessage`로 조율한다. `TeamCreate`와 `TeamDelete`는 더 이상 없다. 명시적인 팀 객체를 만들지 않으며, 세션에서 이름을 붙여 실행한 에이전트는 자동으로 구성되는 하나의 협업 그룹에 속한다. 해당 에이전트에는 이전 대화 맥락을 유지한 채 다시 메시지를 보낼 수 있다.
-
-```
-[메인 에이전트(리더)]
-    ├── Agent(name: "researcher", ...) / Agent(name: "critic", ...)  ← 병렬 실행
-    ├── TaskCreate(작업 + 의존 관계)
-    ├── SendMessage({to: "critic"}, "researcher의 초안을 검토하라")
-    └── 결과 수집 및 종합
+```text
+[Skill orquestradora] → Workflow(script)
+    ├── phase('coleta'): pipeline(items, ...)   ← processa uma lista conhecida
+    ├── phase('verificação'): verificação adversarial ou painel
+    └── return resultado estruturado → agente principal redige a síntese
 ```
 
-**C. 서브에이전트 위임**
+**B. Colaboração entre agentes persistentes**
 
-메시지 한 번에 `Agent` 도구를 N번 병렬로 호출하고 완료 알림에서 결과를 모은다. 호출한 에이전트는 기본적으로 백그라운드에서 실행된다.
+Inicie agentes identificados por nome e coordene-os com tarefas compartilhadas e `SendMessage`. `TeamCreate` e `TeamDelete` foram removidos. Não crie um objeto de equipe explícito: os agentes nomeados participam do grupo de colaboração implícito da sessão e podem receber novas mensagens preservando o contexto.
 
-단계마다 작업 성격이 다르면 혼합 모드로 구성할 수 있다. 예를 들어 워크플로로 자료를 모은 뒤 지속형 에이전트가 합의해 통합하거나, 지속형 에이전트가 만든 결과를 워크플로로 적대적 검증할 수 있다. 각 단계 위에 `**실행 모드:**`를 적는다.
+```text
+[Agente principal (líder)]
+    ├── Agent(name: "researcher", ...) / Agent(name: "critic", ...)  ← iniciar em paralelo
+    ├── TaskCreate(tarefa + dependências)
+    ├── SendMessage({to: "critic"}, "Revise o rascunho do researcher")
+    └── Reunir e sintetizar os resultados
+```
 
-#### 5-1. 데이터 전달 방법
+**C. Delegação a subagentes**
 
-| 방법 | 구현 | 알맞은 실행 모드 | 사용할 때 |
-| --- | --- | --- | --- |
-| **구조화된 반환값** | `Workflow`의 `agent(prompt, {schema})`가 검증된 JSON 반환 | 워크플로 조율 | 다음 단계가 결과를 코드로 처리해야 할 때 |
-| **일반 반환값** | `Agent` 도구의 반환 메시지 | 서브에이전트 | 메인이 요약 결과를 직접 모을 때 |
-| **메시지** | `SendMessage`로 에이전트끼리 직접 전달 | 지속형 에이전트 | 실시간 조율과 피드백이 필요할 때 |
-| **공유 작업 목록** | `TaskCreate`, `TaskUpdate`로 상태 공유 | 지속형 에이전트 | 진행 상황, 의존 관계, 동적 배정을 관리할 때 |
-| **파일** | 정해 둔 경로에 쓰고 읽기 | 모든 모드 | 데이터가 크거나 나중에 작업 과정을 확인해야 할 때 |
+Faça N chamadas paralelas à ferramenta `Agent` na mesma mensagem e reúna os resultados conforme os agentes concluírem. Por padrão, as chamadas ocorrem em segundo plano.
 
-파일로 전달할 때는 다음 규칙을 지킨다.
+Modos podem ser combinados entre fases. Por exemplo, colete informações por workflow, consolide-as por discussão entre agentes persistentes e submeta o resultado à verificação adversarial por outro workflow. Identifique cada fase com `**Modo de execução:**`.
 
-- 작업 디렉터리 아래 `_workspace/`에 중간 산출물을 저장한다.
-- 파일 이름은 `{phase}_{agent}_{artifact}.{ext}` 형식을 쓴다. 예: `01_analyst_requirements.md`
-- 최종 산출물만 사용자가 지정한 경로에 저장한다. `_workspace/`는 사후 검증을 위해 남긴다.
+#### 5.1. Transferir dados entre agentes e etapas
 
-#### 5-2. 오류 처리
+| Método | Implementação | Modos adequados | Quando utilizar |
+|---|---|---|---|
+| **Retorno estruturado** | `Workflow`: `agent(prompt, {schema})` retorna JSON validado | Workflow | Quando a próxima etapa precisa processar os dados por código |
+| **Retorno comum** | Mensagem de retorno de `Agent` | Subagentes | Quando o agente principal consolida diretamente os resultados |
+| **Mensagens** | Comunicação direta por `SendMessage` | Agentes persistentes | Coordenação e feedback em tempo real |
+| **Lista compartilhada de tarefas** | `TaskCreate` e `TaskUpdate` | Agentes persistentes | Acompanhar progresso, dependências e reatribuição |
+| **Arquivos** | Gravação/leitura em caminhos definidos | Todos | Grandes volumes de dados ou exigência de trilha auditável |
 
-오케스트레이터에 오류 처리 방침을 넣는다.
+Ao transferir por arquivos:
 
-- 한 번 다시 시도하고 또 실패하면 해당 결과 없이 진행하되, 최종 보고서에 누락 사실을 적는다. 서로 충돌하는 데이터는 지우지 말고 출처와 함께 남긴다.
-- 다만 사용량 한도 소진, 인증 만료, 권한 거부처럼 다시 시도해도 결과가 같은 실패는 다시 시도하지 않는다. 다시 시도하면 남은 한도만 쓴다. 부분 산출물을 직접 열어 실제로 어디까지 진행됐는지 확인하고, 누락 내용을 파일로 기록한 뒤 사용자에게 보고한다. 사용량 한도라면 한도가 풀리는 시각도 함께 알린다.
-- 멈춘 에이전트가 남긴 빈 곳을 오케스트레이터가 메울 때는 직접 확인한 사실만 대신 반영한다. 에이전트의 판단(예: 어떤 자료를 왜 제외했는지)은 추측해 채우지 않는다. 추측으로 채우면 사후 검증에 쓸 기록을 위조하는 셈이다.
-- 워크플로에서 실패하거나 건너뛴 `agent()`는 `null`을 반환하고 `parallel()`은 실패를 예외로 던지지 않는다. 결과 배열에 `.filter(Boolean)`을 적용하고 빠진 항목 수를 `log()`로 알려야 한다.
-- 지속형 에이전트가 응답하지 않으면 `SendMessage`로 상태를 확인하고 다시 지시한다. 그래도 실패하면 같은 사용자 정의 유형을 새 이름으로 실행하고, 필요한 작업 맥락을 프롬프트로 넘긴다.
+- Salve artefatos intermediários em `_workspace/`, dentro do diretório de trabalho.
+- Nomeie-os conforme `{phase}_{agent}_{artifact}.{ext}`. Exemplo: `01_analyst_requirements.md`.
+- Entregue somente artefatos finais no caminho solicitado pelo usuário. Preserve `_workspace/` para verificações posteriores.
 
-> 오류 유형별 대응 방법은 `references/orchestrator-template.md`에서 해당 실행 모드 템플릿의 「오류 처리」를 확인한다.
+#### 5.2. Tratar erros
 
-#### 5-3. 작업 규모
+Inclua uma política de falhas no orquestrador:
 
-| 작업 규모 | 지속형 에이전트 수 | 워크플로의 `Agent` 호출 규모 |
-| --- | --- | --- |
-| 소규모: 작업 10개 미만 | 2~3명 | 2~5건 |
-| 중규모: 작업 10~20개 | 3~5명 | 약 10건. 동시 실행 상한을 넘으면 자동 대기 |
-| 대규모: 작업 20개 초과 | 감독자 + 작업자 3~5명 | 수십~수백 건. 전체 상한 1,000건 |
+- Faça uma tentativa adicional após uma falha recuperável. Se persistir, prossiga sem o resultado e registre explicitamente a lacuna no relatório. Não apague dados conflitantes: mantenha as versões e suas fontes.
+- **Não repita falhas irrecuperáveis**, como limite de uso esgotado, autenticação expirada ou permissão negada. Verifique os resultados parciais para determinar o avanço efetivo, registre em arquivo as pendências e informe o usuário. Se houver um horário conhecido para restabelecimento do limite, comunique-o.
+- Se o orquestrador precisar completar uma lacuna deixada por agente interrompido, use apenas fatos que tenha verificado diretamente. **Não invente o julgamento do agente**, como os motivos para excluir uma fonte; isso destruiria a rastreabilidade da execução.
+- Em workflows, `agent()` com falha ou ignorado pode devolver `null`, e `parallel()` não necessariamente lança uma exceção. Filtre as saídas com `.filter(Boolean)` e registre a quantidade de itens ausentes com `log()`.
+- Se um agente persistente não responder, solicite status via `SendMessage` e reenvie a instrução. Se continuar falhando, inicie um novo agente do mesmo tipo com outro nome e forneça o contexto necessário.
 
-- 에이전트가 많아질수록 관리 비용도 늘어난다. 기본 규모를 작게 유지한다.
-- 사용자가 `+500k`처럼 토큰 예산을 지정하면 워크플로 스크립트에서 `budget.remaining()`을 확인해 실행 규모를 조절한다.
+> Consulte as orientações específicas em “Tratamento de erros”, nos modelos de `references/orchestrator-template.md`.
 
-#### 5-4. `CLAUDE.md`에 하네스 연결 정보 기록
+#### 5.3. Dimensionar o trabalho
 
-구성을 마치면 프로젝트의 `CLAUDE.md`에 하네스가 있다는 사실과 호출 조건을 기록한다. `CLAUDE.md`는 새 세션마다 읽히므로 자세한 실행 규칙을 반복해서 넣지 않는다.
+| Escala | Agentes persistentes | Chamadas `Agent` em workflow |
+|---|---|---|
+| Pequena: menos de 10 tarefas | 2–3 | 2–5 |
+| Média: 10–20 tarefas | 3–5 | Aproximadamente 10; excedentes aguardam quando o limite de concorrência for atingido |
+| Grande: mais de 20 tarefas | Supervisor + 3–5 executores | Dezenas a centenas; máximo global de 1.000 |
+
+- Equipes maiores aumentam o custo de coordenação. Prefira uma configuração inicial enxuta.
+- Se o usuário definir orçamento como `+500k`, consulte `budget.remaining()` no script `Workflow` para ajustar a escala.
+
+#### 5.4. Registrar a referência mínima no CLAUDE.md
+
+Ao concluir a configuração, informe em `CLAUDE.md` que existe um harness e quando acioná-lo. Como esse arquivo é lido em novas sessões, **não duplique instruções detalhadas**.
 
 ````markdown
-## 하네스: {도메인명}
+## Harness: {nome-do-domínio}
 
-**목표:** {하네스의 핵심 목표 한 줄}
+**Objetivo:** {objetivo do harness em uma frase}
 
-**호출 조건:** {도메인} 관련 작업을 요청받으면 `{orchestrator-skill-name}` 스킬을 사용한다. 단순 질문에는 직접 답해도 된다.
+**Condição de acionamento:** Para tarefas relacionadas a {domínio}, use a skill `{orchestrator-skill-name}`. Para perguntas simples, uma resposta direta é suficiente.
 
-**변경 이력:**
-| 날짜 | 변경 내용 | 대상 | 사유 |
-| --- | --- | --- | --- |
-| {YYYY-MM-DD} | Harness v2로 처음 구성 | 전체 | - |
+**Histórico de alterações:**
+| Data | Alteração | Componente | Motivo |
+|---|---|---|---|
+| {YYYY-MM-DD} | Criação inicial com Harness v2 | Todos | - |
 ````
 
-에이전트·스킬 목록, 디렉터리 구조, 자세한 실행 규칙은 넣지 않는다. 이 정보는 오케스트레이터 스킬과 `.claude/agents/`, `.claude/skills/`에서 관리한다. `CLAUDE.md`에는 호출 조건과 변경 이력만 둔다.
+Não copie listas de agentes, skills, estruturas de diretórios ou regras de execução para `CLAUDE.md`. A fonte dessas informações deve ser o orquestrador e os arquivos em `.claude/agents/` e `.claude/skills/`.
 
-#### 5-5. 후속 요청 처리
+#### 5.5. Tratar solicitações posteriores
 
-오케스트레이터는 처음 실행할 때뿐 아니라 결과를 다시 고칠 때도 작동해야 한다.
+O orquestrador deve funcionar tanto na primeira execução quanto ao revisar resultados anteriores.
 
-1. `description`에 `다시 실행`, `재실행`, `업데이트`, `수정`, `보완`, `{도메인}의 {부분 작업}만 다시`, `이전 결과를 바탕으로`, `결과 개선` 같은 표현을 넣는다.
-2. 오케스트레이터의 0단계에서 기존 작업 맥락을 확인한다.
-   - `_workspace/`가 있고 일부만 고쳐 달라는 요청이면 해당 단계나 에이전트만 다시 실행한다.
-   - `_workspace/`가 있고 새 입력을 받았으면 기존 디렉터리를 타임스탬프가 붙은 디렉터리로 옮긴 뒤 새로 실행한다.
-   - `_workspace/`가 없으면 처음부터 실행한다.
-   - 워크플로의 직전 `runId`가 있으면 `resumeFromRunId`로 재개할 수 있다. 바뀌지 않은 `agent()` 호출은 캐시 결과를 사용한다.
-3. 에이전트 정의에 재호출 방법을 적는다. 이전 결과 파일이 있으면 읽고, 사용자 피드백이 있으면 해당 부분만 고친다.
+1. Inclua na `description` expressões como “execute novamente”, “atualize”, “corrija”, “complemente”, “refaça somente {parte da tarefa} de {domínio}”, “com base no resultado anterior” e “melhore o resultado”.
+2. Na fase 0 do orquestrador, determine o estado da execução:
+   - Se `_workspace/` existir e o usuário pedir apenas correções, reexecute somente a fase ou o agente afetado.
+   - Se `_workspace/` existir e houver novas entradas para uma execução completa, mova a pasta anterior para um diretório com timestamp antes de iniciar novamente.
+   - Se `_workspace/` não existir, comece do início.
+   - Se houver um `runId` anterior de workflow, avalie `resumeFromRunId`; chamadas `agent()` sem alterações podem reaproveitar o cache.
+3. Documente como reexecutar cada agente. Se existir um resultado anterior, leia-o antes de alterar somente os pontos afetados pelo feedback.
 
-### 6단계: 검증과 테스트
+### Fase 6 — Verificar e testar
 
-생성한 하네스를 검증한다. 자세한 방법은 `references/skill-testing-guide.md`를 따른다.
+Valide o harness produzido conforme `references/skill-testing-guide.md`.
 
-#### 6-1. 파일과 참조 검증
+#### 6.1. Estrutura de arquivos e referências
 
-- 모든 에이전트 파일이 올바른 위치에 있는지 확인한다.
-- 스킬의 YAML 프론트매터에 `name`과 `description`이 있는지 확인한다.
-- 에이전트끼리 서로 참조하는 이름이 일치하는지 확인한다.
-- `.claude/commands/`에 명령 파일을 만들지 않았는지 확인한다.
-- 산출물에 v1 방식인 `TeamCreate`, `TeamDelete`, `team_name`, 실험 기능 플래그가 남지 않았는지 확인한다.
+- Confirme que os arquivos dos agentes estão nos diretórios corretos.
+- Verifique `name` e `description` no frontmatter YAML de todas as skills.
+- Confirme que os nomes dos agentes são idênticos em todas as referências.
+- Certifique-se de não criar arquivos de comando em `.claude/commands/`.
+- Verifique que nenhum artefato operacional dependa de `TeamCreate`, `TeamDelete`, `team_name` ou flags experimentais da v1.
 
-#### 6-2. 실행 모드별 검증
+#### 6.2. Validações por modo de execução
 
-- **워크플로 조율**: `meta`가 값만 담은 리터럴인지, `Date.now()`와 `Math.random()`을 쓰지 않았는지, 전체 결과를 기다려야 할 때만 `parallel()`을 썼는지, `.filter(Boolean)`이 빠지지 않았는지, `phase()` 제목이 `meta.phases`와 일치하는지 확인한다.
-- **지속형 에이전트 협업**: `SendMessage`의 발신·수신 경로, 작업 의존 관계, 에이전트 수를 확인한다.
-- **서브에이전트 위임**: 각 에이전트의 입력과 출력이 이어지는지, 병렬 호출을 메시지 한 번에 묶었는지, 결과를 빠짐없이 모으는지 확인한다.
-- **혼합 모드**: 각 단계에 실행 모드를 적었는지, 단계가 바뀔 때 데이터가 끊기지 않는지 확인한다.
+- **Workflow:** `meta` contém apenas literais? `Date.now()` e `Math.random()` foram evitados? `parallel()` é usado somente quando é preciso esperar todos os resultados? O script utiliza `.filter(Boolean)`? Os nomes das `phase()` coincidem com `meta.phases`?
+- **Agentes persistentes:** verifique remetentes e destinatários de `SendMessage`, dependências entre tarefas e tamanho da equipe.
+- **Subagentes:** confira os contratos de entrada e saída, o agrupamento das chamadas paralelas na mesma mensagem e a coleta de todos os resultados.
+- **Modo híbrido:** identifique o modo em cada fase e confirme que a transferência de dados entre fases não possui lacunas.
 
-#### 6-3. 스킬 실행 테스트
+#### 6.3. Testes de execução de skills
 
-1. 스킬마다 실제 사용자가 입력할 법한 구체적인 테스트 요청을 2~3개 만든다.
-2. 스킬 적용 실행(With-skill)과 기준 실행(Baseline)을 병렬로 수행해 스킬이 결과를 얼마나 개선하는지 비교한다. 반복해야 하면 A/B 비교 자체를 워크플로로 만들 수 있다.
-3. 사용자가 직접 검토하는 정성 평가와 검증 조건(assertion)을 사용하는 정량 평가를 함께 쓴다. 객관적인 조건을 만들 수 없으면 사용자 판단을 따른다.
-4. 문제가 나오면 특정 예시만 막는 규칙을 넣지 말고 여러 상황에 적용할 수 있는 원리로 고친다. 다시 테스트하고, 더 고쳐도 얻는 효과가 거의 없을 때까지 반복한다.
-5. 여러 에이전트가 같은 코드를 반복해서 만들면 `scripts/`에 넣는다.
+1. Para cada skill, formule duas ou três solicitações concretas e plausíveis de um usuário real.
+2. Execute em paralelo uma versão **com a skill** (*with-skill*) e outra **sem a skill** (*baseline*). Compare o ganho proporcionado. Se for preciso repetir os testes, implemente o próprio A/B como workflow.
+3. Combine avaliações qualitativas do usuário com verificações quantitativas baseadas em *assertions*. Se não for possível definir critérios objetivos, priorize o julgamento humano.
+4. Quando detectar um problema, corrija o princípio geral, não apenas o exemplo que falhou. Repita o teste até que alterações adicionais tragam ganhos marginais.
+5. Se vários agentes recriarem o mesmo código, mova-o para `scripts/`.
 
-#### 6-4. 호출 조건 검증
+#### 6.4. Verificar condições de acionamento
 
-1. 스킬을 불러와야 하는 요청을 서로 다른 말투와 명시 수준으로 10개 만든다.
-2. 표현은 비슷하지만 다른 스킬이나 도구를 써야 하는 경계 사례도 10개 만든다.
+1. Crie dez solicitações que **devem** acionar a skill, variando linguagem e grau de explicitação.
+2. Crie outras dez solicitações semelhantes que **não devem** acioná-la, por pertencerem a outra ferramenta ou skill.
 
-명백히 무관한 요청은 경계를 검증하지 못한다. 예를 들어 이미지 생성 스킬을 시험할 때 `피보나치 함수 작성`보다 `이 엑셀 파일의 차트를 PNG로 추출해 줘`가 더 좋은 경계 사례다. 결과는 이미지지만 실제로는 스프레드시트 도구가 더 알맞기 때문이다. 기존 스킬과 호출 조건이 겹치는지도 확인한다.
+Casos claramente sem relação não testam bem o limite. Para uma skill de geração de imagens, por exemplo, “extraia o gráfico deste Excel como PNG” é um caso limítrofe melhor do que “escreva uma função de Fibonacci”: embora o resultado seja uma imagem, uma ferramenta de planilhas é mais apropriada. Confira também conflitos com outras skills.
 
-#### 6-5. 모의 실행
+#### 6.5. Simular o fluxo
 
-- 오케스트레이터의 단계 순서가 논리적인지 확인한다.
-- 데이터 전달 경로가 중간에 끊기지 않는지 확인한다.
-- 모든 에이전트의 입력이 앞 단계의 출력과 맞는지 확인한다.
-- 오류가 났을 때 대체 절차를 실제로 실행할 수 있는지 확인한다.
+- Verifique se a sequência das etapas é coerente.
+- Confira a continuidade do fluxo de dados entre fases.
+- Confirme que cada agente recebe saídas compatíveis das fases anteriores.
+- Valide a viabilidade dos procedimentos de contingência.
 
-#### 6-6. 테스트 시나리오 기록
+#### 6.6. Documentar cenários de teste
 
-오케스트레이터 스킬에 `## 테스트 시나리오`를 만들고 정상 흐름 한 가지와 오류 흐름 한 가지 이상을 적는다.
+Acrescente `## Cenários de teste` à skill orquestradora, com pelo menos um fluxo normal e um fluxo de falha.
 
-### 7단계: 운영·유지 보수와 개선
+### Fase 7 — Operar, manter e aprimorar
 
-하네스는 한 번 만들고 끝나는 산출물이 아니다.
+Um harness não termina quando é criado.
 
-실행 결과를 회고하고 피드백을 반영하는 작업은 `harness:evolve` 스킬이 맡는다. 사용자가 `하네스 회고`, `하네스 진화`, `피드백 반영해줘`라고 요청하면 `harness:evolve`를 사용한다. 이 스킬은 처음 구성과 현재 상태의 차이를 분석하고, 여러 상황에 적용할 수 있도록 피드백을 정리해 에이전트·스킬·오케스트레이터에 반영한다. `CLAUDE.md` 변경 이력도 갱신한다.
+Para revisar resultados de execução e incorporar feedback, acione `harness:evolve`. Isso inclui pedidos como “revise o harness”, “evolua o harness” e “incorpore este feedback”. A skill de evolução identifica diferenças entre a configuração inicial e a atual, generaliza as lições e atualiza agentes, skills, orquestrador e o histórico em `CLAUDE.md`.
 
-이 `harness` 스킬은 기존 하네스를 운영하고 유지 보수하는 다음 절차를 직접 처리한다.
+A skill `harness` continua responsável pela manutenção estrutural:
 
-1. **현재 상태 점검**: `.claude/agents/`, `.claude/skills/`, 오케스트레이터 구성을 비교해 불일치 목록을 만들고 사용자에게 알린다.
-2. **조금씩 추가·수정**: 한 번에 한 항목만 바꾸고 곧바로 다음 검증을 실행한다.
-3. **변경 이력 기록**: `CLAUDE.md`에 날짜, 변경 내용, 대상, 사유를 적는다.
-4. **변경 검증**: 파일 구조를 확인한다. 호출 조건에 영향을 주면 호출 테스트도 한다. 변경 범위가 크면 실행 테스트와 모의 실행까지 한 뒤 `CLAUDE.md`와 실제 파일이 일치하는지 마지막으로 확인한다.
+1. **Auditar o estado:** compare `.claude/agents/`, `.claude/skills/` e o orquestrador; relacione divergências e informe o usuário.
+2. **Alterar gradualmente:** implemente uma mudança por vez e valide-a imediatamente.
+3. **Registrar o histórico:** inclua data, alteração, componente e justificativa em `CLAUDE.md`.
+4. **Validar mudanças:** verifique a estrutura; teste gatilhos se tiverem sido alterados; se o escopo for amplo, faça também testes de execução e simulações. Confirme por fim a coerência entre `CLAUDE.md` e os arquivos reais.
 
-다음 상황에서는 `harness:evolve`로 개선하자고 제안한다.
+Sugira `harness:evolve` proativamente quando:
+- Surgirem duas ou mais solicitações semelhantes de correção.
+- Os agentes falharem repetidamente pela mesma causa.
+- O usuário executar manualmente e repetidas vezes atividades que deveriam passar pelo orquestrador.
 
-- 같은 종류의 피드백이 두 번 이상 나왔다.
-- 에이전트가 같은 원인으로 반복해서 실패한다.
-- 사용자가 오케스트레이터를 거치지 않고 같은 작업을 계속 수동으로 처리한다.
+## Checklist de entrega
 
-## 산출물 점검표
+- [ ] Todas as definições personalizadas reutilizáveis estão em `<projeto>/.claude/agents/`. Tipos nativos usados em tarefas pontuais não foram redefinidos desnecessariamente.
+- [ ] As skills e referências estão em `<projeto>/.claude/skills/`.
+- [ ] Existe uma skill orquestradora que define transferência de dados, tratamento de falhas e cenários de teste.
+- [ ] O modo de execução (workflow, agentes persistentes ou subagentes) está documentado; se for híbrido, cada fase indica seu modo.
+- [ ] Os modelos foram escolhidos segundo complexidade, duração, autonomia e latência, com justificativas registradas. Nenhum modelo caro foi imposto indiscriminadamente.
+- [ ] Nenhum artefato operacional preserva dependências da v1, como `TeamCreate`, `TeamDelete` ou flags experimentais.
+- [ ] Workflows usam `.filter(Boolean)`, `meta` apenas com literais e `parallel()` somente quando necessário esperar todos os resultados.
+- [ ] Não foram criados arquivos em `.claude/commands/`.
+- [ ] Foram verificadas sobreposições antes de criar agentes e skills; papéis redundantes foram reutilizados ou ampliados, exceto quando especialização de domínio justificar a separação.
+- [ ] Agentes, skills, orquestrador e `CLAUDE.md` estão no idioma da conversa, salvo orientação explícita do usuário ou idioma predominante do harness existente.
+- [ ] Cada `description` especifica objetivo, condições de acionamento e termos de solicitação posterior.
+- [ ] `SKILL.md` possui menos de 500 linhas, com detalhes transferidos para `references/`.
+- [ ] Cada skill foi testada com duas ou três solicitações realistas.
+- [ ] Foram executados testes positivos e casos limítrofes negativos de acionamento.
+- [ ] `CLAUDE.md` contém apenas regras de acionamento e histórico de alterações.
+- [ ] A fase 0 do orquestrador distingue primeira execução, continuação, nova execução e reexecução parcial; workflows também oferecem retomada.
 
-- [ ] `프로젝트/.claude/agents/`에 재사용할 모든 사용자 정의 유형의 파일을 만들었다. 단발 작업에 기본 제공 유형을 그대로 쓰는 경우는 제외했다.
-- [ ] `프로젝트/.claude/skills/`에 필요한 `SKILL.md`와 참조 문서를 만들었다.
-- [ ] 오케스트레이터 스킬 한 개에 데이터 전달 방법, 오류 처리, 테스트 시나리오를 넣었다.
-- [ ] 워크플로 조율, 지속형 에이전트, 서브에이전트 가운데 사용할 실행 모드를 적었다. 혼합 모드라면 단계마다 표시했다.
-- [ ] 에이전트별 `model:`을 복잡도, 작업 기간, 자율성, 응답 속도에 따라 골랐고 이유를 주석으로 남겼다. 모든 에이전트에 같은 고성능 모델을 일괄 지정하지 않았다.
-- [ ] 산출물에 `TeamCreate`, `TeamDelete`, 실험 기능 플래그 같은 v1 방식이 남지 않았다.
-- [ ] 워크플로 스크립트에 `.filter(Boolean)`을 넣고 `meta`에는 리터럴만 썼다. 꼭 필요할 때만 `parallel()`로 전체 결과를 기다린다.
-- [ ] `.claude/commands/`에 파일을 만들지 않았다.
-- [ ] 새 에이전트·스킬을 만들기 전에 기존 것과 역할이 겹치는지 확인했다. 도메인을 의도적으로 특화한 경우가 아니면 겹치는 것은 기존 것을 쓰거나 확장했고, 이름이나 역할이 충돌하지 않는다.
-- [ ] 에이전트 정의, 스킬, 오케스트레이터, `CLAUDE.md` 기록을 사용자가 대화에 쓰는 언어로 작성했다. 사용자가 따로 정한 언어나 기존 하네스 파일의 언어가 있으면 그 언어를 따랐다.
-- [ ] 스킬 `description`에 해야 할 일과 호출 조건을 구체적으로 적고 후속 요청 표현도 넣었다.
-- [ ] `SKILL.md` 본문이 500줄 미만이다. 500줄 이상이면 세부 내용을 `references/`로 옮겼다.
-- [ ] 실제 요청과 비슷한 테스트 문장 2~3개로 실행했다.
-- [ ] 스킬을 불러와야 하는 요청과 불러오면 안 되는 경계 사례로 호출 조건을 검증했다.
-- [ ] `CLAUDE.md`에 호출 조건과 변경 이력만 기록했다.
-- [ ] 오케스트레이터의 0단계에서 처음 실행, 후속 실행, 일부 재실행을 구분한다. 워크플로는 재개 옵션도 다룬다.
+## Referências
 
-## 참고 문서
-
-- **실행 모드 상세**: `references/execution-modes.md`
-- **모델 선택 가이드**: `references/model-selection-guide.md`
-- **팀 구성 방식과 에이전트 정의**: `references/team-patterns.md`
-- **실전 팀 구성 예시**: `references/team-examples.md`
-- **워크플로 스크립트 예시와 주의 사항**: `references/workflow-recipes.md`
-- **오케스트레이터 템플릿**: `references/orchestrator-template.md`
-- **스킬 작성 가이드**: `references/skill-writing-guide.md`
-- **스킬 테스트 가이드**: `references/skill-testing-guide.md`
-- **QA 에이전트 가이드**: `references/qa-agent-guide.md`
+- **Modos de execução:** `references/execution-modes.md`.
+- **Escolha de modelos:** `references/model-selection-guide.md`.
+- **Padrões de equipes e definições de agentes:** `references/team-patterns.md`.
+- **Exemplos de equipes:** `references/team-examples.md`.
+- **Scripts de workflow e armadilhas:** `references/workflow-recipes.md`.
+- **Modelos de orquestradores:** `references/orchestrator-template.md`.
+- **Redação de skills:** `references/skill-writing-guide.md`.
+- **Testes e avaliação:** `references/skill-testing-guide.md`.
+- **Agentes de QA:** `references/qa-agent-guide.md`.

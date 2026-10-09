@@ -1,125 +1,127 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/Version-2.1.0-brightgreen.svg" alt="Version">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License"></a>
-  <img src="https://img.shields.io/badge/Claude_Code-Plugin-purple.svg" alt="Claude Code Plugin">
-  <img src="https://img.shields.io/badge/Execution_Modes-3-teal.svg" alt="3 Execution Modes">
-  <img src="https://img.shields.io/badge/Patterns-6+Quality-orange.svg" alt="Patterns">
+  <img src="https://img.shields.io/badge/Versao-2.1.0-brightgreen.svg" alt="Versão">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/Licenca-Apache_2.0-blue.svg" alt="Licença"></a>
+  <img src="https://img.shields.io/badge/Claude_Code-Plugin-purple.svg" alt="Plugin Claude Code">
+  <img src="https://img.shields.io/badge/Modos_de_Execucao-3-teal.svg" alt="3 modos de execução">
+  <img src="https://img.shields.io/badge/Padrões-6+Qualidade-orange.svg" alt="Padrões">
 </p>
 
 <p align="center">
   <a href="https://revfactory.github.io/harness-animation/">
-    <img src="harness_reel_en.gif" alt="Harness in 15 seconds: one request becomes an agent team" width="800">
+    <img src="harness_reel_en.gif" alt="Harness em 15 segundos: de um pedido a uma equipe de agentes" width="800">
   </a>
   <br>
-  <sub>15-second motion reel · <a href="https://revfactory.github.io/harness-animation/">Watch the full 2-minute interactive walkthrough (Korean) →</a></sub>
+  <sub>Animação de 15 segundos · <a href="https://revfactory.github.io/harness-animation/">Veja a apresentação interativa completa de 2 minutos (em coreano) →</a></sub>
 </p>
 
-# Harness v2 — The Team-Architecture Factory for Claude Code
+# Harness v2 — Fábrica de arquiteturas de equipes para Claude Code
 
-**English** | [한국어](README_KO.md)
+**Português brasileiro** · Tradução e adaptação da documentação do projeto [revfactory/harness](https://github.com/revfactory/harness).
 
-> **Harness is a team-architecture factory for Claude Code.** One sentence — **"build a harness for this project"** · **"하네스 구성해줘"** — and the plugin turns your domain description into an agent team and the skills they use.
+> **O Harness constrói arquiteturas de equipes para Claude Code.** Com um único pedido — **“Crie um harness para este projeto”** — o plugin transforma a descrição do seu domínio em uma equipe de agentes e nas skills que eles utilizarão.
 
-## What's new in v2
+## Novidades da v2
 
-v2 is a ground-up rebuild for the current Claude Code multi-agent runtime:
+A v2 foi reconstruída para o runtime multiagente atual do Claude Code:
 
-- **Three native execution modes.** v1 knew two modes built on the experimental `TeamCreate` API, which no longer exists. v2 targets what actually ships today:
-  1. **Workflow orchestration** — deterministic scripts (`pipeline()` / `parallel()` / schemas / budgets) for fan-outs, verification loops, and large-scale runs
-  2. **Persistent agent collaboration** — named agents + `SendMessage` + shared task lists, with context retained across turns
-  3. **Sub-agent delegation** — lightweight one-shot parallel dispatch
-- **Workflow-native quality patterns.** Adversarial verification, judge panels, loop-until-dry, multi-modal sweeps, completeness critics — codified so generated harnesses filter out plausible-but-wrong output.
-- **No experimental flags.** The `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` dependency is gone entirely.
-- **Sane model policy.** v1 pinned every agent to `model: "opus"`. v2 selects a tier per agent — fable / opus / sonnet — based on the task's complexity, duration, autonomy, and latency needs, and forbids unjustified blanket pins.
-- **`/harness:evolve` actually ships.** The evolution mechanism v1 only documented is now a real skill: it captures the delta between your initial and current harness, generalizes feedback, and feeds it back into agents/skills/orchestrators.
-- **v1 migration built in.** The factory detects v1 artifacts (`TeamCreate`, `TeamDelete`, experimental flags) and offers a mechanical migration path.
+- **Três modos nativos de execução.** A v1 usava a API experimental `TeamCreate`, que deixou de existir. A v2 usa os recursos disponíveis no runtime atual:
+  1. **Orquestração por workflows:** scripts determinísticos (`pipeline()`, `parallel()`, schemas e orçamentos) para atividades em paralelo, ciclos de verificação e execuções em grande escala.
+  2. **Colaboração entre agentes persistentes:** agentes identificados por nome, `SendMessage` e listas de tarefas compartilhadas; o contexto é mantido entre interações.
+  3. **Delegação a subagentes:** chamadas pontuais e leves, inclusive em paralelo.
+- **Padrões de qualidade integrados aos workflows.** Verificação adversarial, painéis de avaliadores, busca iterativa até esgotamento (*loop-until-dry*), varreduras por diferentes perspectivas e revisão de completude ajudam a filtrar resultados plausíveis, mas incorretos.
+- **Sem flags experimentais.** A dependência de `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` foi removida.
+- **Política de escolha de modelos.** Em vez de fixar `model: "opus"` em todos os agentes, a v2 escolhe entre fable, opus e sonnet conforme complexidade, duração, autonomia e necessidade de baixa latência. Não se permite definir um mesmo modelo para todos os agentes sem justificativa.
+- **Skill `/harness:evolve` funcional.** A evolução, que na v1 existia apenas na documentação, identifica diferenças entre a configuração inicial e o harness atual, generaliza o feedback e incorpora melhorias em agentes, skills e orquestradores.
+- **Migração integrada da v1.** A fábrica detecta vestígios da v1 (`TeamCreate`, `TeamDelete` e flags experimentais) e propõe a migração.
 
-## Core features
+## Funcionalidades principais
 
-- **Agent team design** — six architecture patterns (Pipeline, Fan-out/Fan-in, Expert Pool, Producer-Reviewer, Supervisor, Hierarchical Delegation), each mapped to its best v2 execution mode
-- **Skill generation** — context-efficient skills via Progressive Disclosure
-- **Orchestration** — data-passing protocols (structured schemas, files, messages, tasks), error handling, resume support
-- **Verification** — trigger evals, dry runs, with-skill vs. without-skill A/B testing (optionally as a workflow itself)
-- **Evolution** — `/harness:evolve` turns usage feedback into measurable next-generation improvements
+- **Desenho de equipes:** seis padrões (Pipeline, Fan-out/Fan-in, Pool de Especialistas, Produção–Revisão, Supervisor e Delegação Hierárquica), cada um associado ao modo de execução mais adequado na v2.
+- **Geração de skills:** instruções que economizam contexto por meio de divulgação progressiva (*Progressive Disclosure*).
+- **Orquestração:** protocolos de transferência de dados (schemas estruturados, arquivos, mensagens e tarefas), tratamento de erros e retomada de execuções.
+- **Verificação:** avaliação de acionamento, execuções simuladas (*dry runs*) e testes A/B com e sem a skill, inclusive como workflows.
+- **Evolução:** `/harness:evolve` converte o feedback de uso em melhorias mensuráveis.
 
-## Workflow
+## Etapas do trabalho
 
 ```
-Phase 0: Audit existing harness (new / extend / maintain — v1 artifacts detected here)
-Phase 1: Domain analysis (incl. control-flow shape of the work)
-Phase 2: Execution mode & team architecture design
-Phase 3: Agent definitions (.claude/agents/)
-Phase 4: Skill generation (.claude/skills/)
-Phase 5: Orchestration & CLAUDE.md pointer
-Phase 6: Verification & testing
-Phase 7: Maintenance — evolution via /harness:evolve
+Fase 0: Auditar o harness existente (criar, ampliar ou manter; detectar artefatos v1)
+Fase 1: Analisar o domínio e o fluxo de controle das tarefas
+Fase 2: Definir modo de execução e arquitetura da equipe
+Fase 3: Criar as definições de agentes (.claude/agents/)
+Fase 4: Gerar as skills (.claude/skills/)
+Fase 5: Integrar a orquestração e registrar a referência no CLAUDE.md
+Fase 6: Verificar e testar
+Fase 7: Manter e evoluir por meio de /harness:evolve
 ```
 
-## Install
+## Instalação
 
-### Via marketplace
+### Instalar esta tradução pelo marketplace
 
 ```shell
-/plugin marketplace add revfactory/harness
+/plugin marketplace add antoniocoutinho42/harness
 /plugin install harness@harness-marketplace
 ```
 
-### As global skills
+### Como skills globais
 
 ```shell
 cp -r skills/harness ~/.claude/skills/harness
 cp -r skills/evolve ~/.claude/skills/harness-evolve
 ```
 
-No environment variables or experimental flags required.
+Para instalar a versão original em inglês e coreano, o marketplace permanece em `revfactory/harness`.
 
-## Usage
+Não são necessárias variáveis de ambiente ou flags experimentais.
 
-```
-하네스 구성해줘
-build a harness for this project
-design an agent team for <domain>
-```
-
-After using a generated harness:
+## Como usar
 
 ```
-하네스 회고해줘 / evolve the harness with this feedback
+Crie um harness para este projeto
+Projete uma equipe de agentes para meu domínio
+Estruture um harness multiagente para o processo de pesquisa
 ```
 
-### Choosing an execution mode
-
-| Mode | Primitive | When |
-|------|-----------|------|
-| **Workflow orchestration** | `Workflow` scripts | Control flow is deterministic: enumerable fan-outs, verification loops, large scale, structured outputs |
-| **Persistent agents** | `Agent(name:)` + `SendMessage` + tasks | Long-lived specialists that keep context; iterative feedback and negotiation |
-| **Sub-agent delegation** | one-shot `Agent` calls | Fire-and-forget parallel work; results only |
-
-The factory picks the mode from the **shape of the control flow**, not from team size — and mixes modes per phase when that fits better.
-
-## Generated artifacts
+Depois de executar o harness:
 
 ```
-your-project/
+Revise o harness e incorpore as lições desta execução
+```
+
+### Como escolher o modo de execução
+
+| Modo | Recurso utilizado | Quando usar |
+|---|---|---|
+| **Orquestração por workflows** | Scripts `Workflow` | Fluxo determinístico, tarefas enumeráveis, ciclos de verificação, grande escala e saídas estruturadas |
+| **Agentes persistentes** | `Agent(name:)`, `SendMessage` e tarefas | Especialistas que mantêm contexto e precisam iterar, negociar ou receber feedback |
+| **Delegação a subagentes** | Chamadas pontuais `Agent` | Trabalho paralelo independente, em que basta receber o resultado |
+
+A fábrica escolhe o modo conforme o **formato do fluxo de controle**, não o tamanho da equipe. Também pode combinar modos entre fases.
+
+## Arquivos gerados
+
+```text
+seu-projeto/
 ├── .claude/
-│   ├── agents/          # agent definitions (who)
+│   ├── agents/          # definições de agentes (quem executa)
 │   │   ├── analyst.md
 │   │   ├── builder.md
 │   │   └── qa.md
-│   └── skills/          # skills (how) + one orchestrator (who-when-in-what-order)
+│   └── skills/          # skills (como executar) e um orquestrador (quem, quando e em que ordem)
 │       ├── analyze/SKILL.md
 │       └── build/SKILL.md
-└── CLAUDE.md            # minimal pointer: trigger rule + change history
+└── CLAUDE.md            # referência mínima: regra de acionamento e histórico de alterações
 ```
 
-## Migrating from v1
+## Migração da v1
 
-See [docs/migration-v1-to-v2.md](docs/migration-v1-to-v2.md). Summary: remove `TeamCreate`/`TeamDelete`/broadcast/flag references, convert fan-outs to Workflow scripts, rewrite remaining collaboration with named agents + `SendMessage`, drop blanket `model: "opus"` pins. The factory automates this when it detects v1 artifacts (Phase 0).
+Consulte [docs/migration-v1-to-v2.md](docs/migration-v1-to-v2.md). Em resumo: remova referências a `TeamCreate`, `TeamDelete`, broadcasts e flags experimentais; converta fan-outs para scripts `Workflow`; reescreva a colaboração remanescente usando agentes identificados por nome e `SendMessage`; e elimine a imposição indiscriminada de `model: "opus"`. A fábrica automatiza esse processo ao encontrar artefatos v1 na fase 0.
 
-## Prior results (v1)
+## Resultados anteriores (v1)
 
-A controlled A/B on 15 software-engineering tasks measured the effect of structured pre-configuration on LLM code-agent output quality: mean quality 49.5 → 79.3 (+60%), 15/15 win rate, −32% output variance (n=15, author-run, see [revfactory/claude-code-harness](https://github.com/revfactory/claude-code-harness)). Treat these as author-measured numbers; run your own pilot for adoption decisions.
+Um teste A/B controlado com 15 tarefas de engenharia de software avaliou o efeito de configurações estruturadas na qualidade dos resultados de agentes de programação: qualidade média de 49,5 para 79,3 (+60%), vitória em 15/15 tarefas e redução de 32% na variância dos resultados (n=15; experimento conduzido pelos próprios autores; veja [revfactory/claude-code-harness](https://github.com/revfactory/claude-code-harness)). Esses números são dos autores; realize um piloto próprio antes de decidir pela adoção.
 
-## License
+## Licença
 
 Apache 2.0

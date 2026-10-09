@@ -1,120 +1,120 @@
-# Claude 모델 선택 가이드
+# Guia de escolha dos modelos Claude
 
-에이전트에 사용할 모델은 업무의 **복잡도, 예상 기간, 필요한 자율성, 응답 속도**라는 네 가지 기준으로 고른다. 모델은 에이전트 정의 파일의 YAML 프론트매터(머리말)에 있는 `model:`, `Agent` 도구의 `model` 매개변수, `Workflow`의 `agent()`에 전달하는 `opts.model`에서 지정할 수 있다. 선택한 이유는 에이전트 정의나 조율 스킬에 주석으로 남긴다.
+Escolha o modelo de cada agente considerando **complexidade, duração prevista, autonomia necessária e latência**. Configure-o no `model:` do frontmatter YAML do agente, no parâmetro `model` de `Agent` ou em `opts.model` nas chamadas `agent()` de `Workflow`. Registre a justificativa na definição do agente ou no orquestrador.
 
-## 요약 결정표
+## Tabela de decisão
 
-| 모델 | 선택 기준 | 대표 작업 |
-|------|----------|----------|
-| **fable** | 복잡한 목표를 바탕으로 스스로 계획하고 여러 단계를 이어 최종 산출물까지 만드는 장기·자율형 모델 | 고난도 추론, 창의 작업, 에이전트 조율, 계획부터 장기 실행까지 맡겨야 하는 매우 어려운 작업 |
-| **opus** | 전문적이고 복잡한 문제를 깊이 분석해 정교한 판단과 결론을 내리는 추론 중심 모델 | 설계·아키텍처, 코드 생성, 복잡한 분석, 교차 검증, 창작 |
-| **sonnet** | 글쓰기, 코딩, 분석, 조사 등 일상 업무 대부분을 균형 있게 처리하는 범용 모델 | 일반적인 글쓰기·코딩·조사, 로그 파싱, 형식 변환, 정적 파일 검사, 배포 스크립트 실행, 단순 수집 |
+| Modelo | Critério | Exemplos |
+|---|---|---|
+| **fable** | Trabalho longo e autônomo, que exige transformar um objetivo complexo em um plano de várias etapas e entregar um resultado final | Raciocínio de alta complexidade, coordenação de agentes, planejamento e execução prolongada, trabalho criativo aberto |
+| **opus** | Problema técnico ou especializado que exige análise profunda e conclusões fundamentadas | Arquitetura, programação, análises complexas, verificação cruzada e criação |
+| **sonnet** | Modelo versátil para a maioria das tarefas rotineiras de redação, programação, análise e pesquisa | Redação e programação comuns, tratamento de logs, conversão de formatos, inspeção estática, deploy e coleta simples |
 
 ## 1. Fable
 
-**주요 역할:** 계획을 세워 장기간 자율적으로 수행해야 하는 매우 어려운 작업에 알맞다. 질문에 바로 답하는 데 그치지 않고, 목표를 이해한 뒤 여러 단계를 계획하고 이어서 최종 산출물을 만든다.
+**Papel principal:** realizar trabalhos muito difíceis que requerem planejamento autônomo e continuidade ao longo de diversas etapas. Em vez de responder apenas à pergunta, o modelo deve compreender o objetivo, definir um plano e conduzi-lo até uma entrega final.
 
-### 잘 맞는 작업
+### Trabalhos adequados
 
-**① 여러 단계가 이어지는 장기 작업** — 한 번의 답변으로 끝나지 않고 여러 작업을 차례로 수행해야 할 때 사용한다.
-- 시장 조사 → 경쟁사 분석 → 전략 수립 → 보고서 작성
-- 요구사항 분석 → 서비스 구조 설계 → 개발 계획 작성 → 산출물 제작
-- 여러 문서를 검토한 뒤 종합 결론과 실행 계획 도출
-- 장기 프로젝트의 전체 과정 설계
+**① Projetos longos, compostos por etapas interdependentes.** Use quando uma única resposta não for suficiente:
+- Pesquisa de mercado → análise de concorrentes → estratégia → relatório.
+- Levantamento de requisitos → arquitetura de serviço → plano de desenvolvimento → implementação.
+- Revisão de vários documentos → conclusão consolidada → plano de ação.
+- Planejamento do ciclo completo de um projeto prolongado.
 
-개별 단계가 따로 떨어져 있지 않고 **앞 단계의 결과가 다음 단계에 영향을 주는 작업**이라는 점이 중요하다.
+O ponto decisivo é que **resultados anteriores influenciam as decisões seguintes**.
 
-**② 분량이 많고 내용이 복잡한 자료 검토** — 논문, 보고서, 회의록, 기술 문서처럼 양이 많고 복잡한 자료를 함께 검토해야 할 때 사용한다. 단순 요약이 아니라 다음 작업까지 해야 하는 경우다.
-- 여러 자료 사이의 공통점과 차이점 분석
-- 서로 충돌하는 주장 확인
-- 핵심 근거와 주변 정보를 구분
-- 많은 자료를 논리적인 산출물 하나로 종합
+**② Análise de grande volume de material complexo.** Adequado a conjuntos extensos de artigos, relatórios, atas e documentos técnicos quando se espera mais que um resumo:
+- Identificar convergências e divergências.
+- Verificar afirmações contraditórias.
+- Distinguir evidência central de informação acessória.
+- Integrar diversas fontes em um resultado coerente.
 
-**③ 막연한 아이디어를 구체적인 산출물로 만들기** — 요구사항이 확정되지 않고 대략적인 아이디어만 주어졌을 때, 필요한 세부 사항을 스스로 정해 산출물을 만드는 작업이다.
-- "이런 느낌의 서비스"라는 아이디어를 사업 기획서로 발전
-- 대략적인 주제만으로 발표 자료의 구조와 내용 설계
-- 불완전한 제품 아이디어를 기능 목록과 개발 계획으로 구체화
-- 초안이 없는 상태에서 완성된 보고서나 콘텐츠 제작
+**③ Transformar ideias vagas em entregas concretas.** Quando requisitos ainda não foram definidos e o modelo precisa resolver lacunas:
+- Desenvolver uma ideia preliminar de serviço em um plano de negócios.
+- Criar estrutura e conteúdo de uma apresentação a partir de um tema geral.
+- Converter uma ideia incompleta de produto em funcionalidades e plano de desenvolvimento.
+- Produzir um relatório completo sem rascunho inicial.
 
-정해진 지시를 그대로 따르는 능력보다 **비어 있는 부분을 판단해서 채우는 능력**이 중요할 때 선택한다.
+Escolha quando importa mais **tomar decisões sobre o que ainda não foi especificado** do que seguir instruções fechadas.
 
-**④ 깊은 추론과 계획·조정·장기 실행이 함께 필요한 문제** — Fable이 Opus보다 무조건 더 깊게 추론하는 것은 아니다. 깊은 추론과 함께 계획, 조정, 장기 실행까지 필요한 문제에 Fable이 더 알맞다.
+**④ Problemas que combinam raciocínio profundo, planejamento, coordenação e execução longa.** Fable não é necessariamente superior a Opus em profundidade de raciocínio isolado. A vantagem proposta está em combinar análise com planejamento autônomo e coordenação de várias etapas.
 
-### Fable을 선택할 때
+### Quando optar por Fable
 
-- 결과를 얻기까지 여러 단계를 거쳐야 할 때
-- 사용자가 모든 절차를 직접 지정하기 어려울 때
-- 모델이 스스로 작업 순서를 계획해야 할 때
-- 방대한 자료를 바탕으로 완성된 산출물을 만들어야 할 때
-- 짧은 답변보다 프로젝트 단위의 결과가 필요할 때
+- O resultado exige várias etapas encadeadas.
+- O usuário não consegue especificar todas as decisões antecipadamente.
+- O modelo precisa determinar autonomamente a ordem das tarefas.
+- A entrega deve integrar um volume grande de informações.
+- O objetivo é concluir um projeto, não apenas responder a uma pergunta.
 
 ## 2. Opus
 
-**주요 역할:** 어려운 문제를 깊이 분석해 해결하는 고성능 추론 모델이다. Fable이 장기 계획과 자율 실행에 알맞다면, Opus는 범위가 정해진 문제를 깊이 파고들어 논리적으로 분석하는 데 알맞다.
+**Papel principal:** analisar problemas difíceis com profundidade e rigor. Enquanto Fable é adequado a execução autônoma prolongada, Opus é indicado quando o problema é **bem delimitado**, mas exige raciocínio especializado.
 
-### 잘 맞는 작업
+### Trabalhos adequados
 
-**① 복잡한 조사와 분석** — 정보를 찾는 데서 끝나지 않고 여러 근거를 평가해 논리적인 결론을 내려야 하는 작업이다.
-- 복잡한 산업이나 시장을 깊이 조사
-- 여러 연구 결과의 비교 분석
-- 정책이나 사업 전략의 장단점 평가
-- 데이터와 문서를 바탕으로 원인과 결과 분석
-- 서로 다른 관점을 종합한 결론 작성
+**① Pesquisa e análise complexas.** Não basta encontrar informações; é preciso ponderar evidências e construir conclusões:
+- Análise profunda de mercados ou setores complexos.
+- Comparação de pesquisas e estudos.
+- Avaliação de benefícios e riscos de políticas ou estratégias empresariais.
+- Identificação de relações de causa e efeito em documentos e dados.
+- Síntese de perspectivas conflitantes.
 
-**② 긴 기술 문서 검토** — 전문 용어가 많고 구조가 복잡한 문서를 읽고 이해하는 작업이다. 소프트웨어 설계 문서, 시스템 아키텍처 문서, 연구 논문, 기술 규격서, 제품 요구사항 문서, 복잡한 API·개발 문서가 이에 해당한다. 문서를 짧게 줄이는 일보다 **논리 구조와 기술적 의미를 파악하는 일**에 알맞다.
+**② Leitura de documentação técnica extensa.** Adequado a especificações de software, arquitetura de sistemas, artigos científicos, padrões técnicos, requisitos de produto e documentação complexa de APIs. O propósito principal é **compreender o significado e a estrutura lógica**, não simplesmente encurtar textos.
 
-**③ 연구 방법론 검토** — 연구 결과뿐 아니라 그 결과를 얻은 방법이 타당한지도 따져 보는 작업이다.
-- 연구 설계가 적절한지, 표본이 충분한지, 표본에 편향이 없는지 확인
-- 측정 방식과 통계적 결론에 문제가 없는지 확인
-- 결론이 실제 근거보다 과장되지는 않았는지, 다르게 해석할 여지는 없는지 검토
+**③ Avaliação metodológica de pesquisas.** Examine o processo que gerou as conclusões:
+- Adequação do desenho do estudo, tamanho e possíveis vieses da amostra.
+- Consistência das medidas e inferências estatísticas.
+- Relação entre evidências e conclusões, inclusive interpretações alternativas.
 
-**④ 여러 개발 단계를 스스로 수행하는 코딩** — 코드 한두 줄을 만드는 데 그치지 않고 목표를 이해해 여러 개발 작업을 이어서 수행한다.
-- 기존 코드베이스 분석과 오류 원인 탐색
-- 여러 파일에 걸친 코드 수정, 기능 구현, 테스트 작성
-- 코드 구조를 개선하고 개발 과정에서 다음 작업을 스스로 판단
+**④ Programação com múltiplas etapas.** Para muito além de escrever trechos isolados:
+- Entender o código existente e localizar causas de falhas.
+- Modificar diversos arquivos, implementar funcionalidades e escrever testes.
+- Melhorar arquitetura e decidir passos técnicos subsequentes.
 
-### Opus를 선택할 때
+### Quando optar por Opus
 
-- 문제가 전문적이고 어렵지만 **범위는 비교적 명확할 때**
-- 깊이 있는 논리 분석과 검토가 필요할 때
-- 기술 문서나 논문을 정확히 이해해야 할 때
-- 연구나 분석의 허점을 찾아야 할 때
-- 복잡한 코딩이나 기술 문제를 해결해야 할 때
+- O problema é difícil e especializado, mas tem **escopo relativamente claro**.
+- É necessária análise lógica ou revisão aprofundada.
+- Documentos técnicos e artigos precisam ser compreendidos precisamente.
+- É necessário encontrar falhas em estudos ou argumentos.
+- O trabalho envolve desafios complexos de programação.
 
 ## 3. Sonnet
 
-**주요 역할:** 일상 업무 대부분을 안정적으로 수행하는 균형 잡힌 범용 모델이다. 매우 복잡하거나 전문적인 판단이 필요한 작업이 아니라면 글쓰기, 코딩, 조사, 분석에 두루 쓸 수 있다.
+**Papel principal:** atender à maioria das necessidades cotidianas de modo equilibrado, com bom compromisso entre velocidade e qualidade.
 
-### 잘 맞는 작업
+### Trabalhos adequados
 
-**① 글쓰기와 콘텐츠 제작** — 이메일, 블로그 글, 보고서 초안, 광고 문구, 문장 교정·재작성, 발표 원고, SNS 콘텐츠 기획, 아이디어 구상에 알맞다.
+**① Redação e conteúdo:** e-mails, artigos, rascunhos de relatórios, textos publicitários, edição, apresentações, redes sociais e brainstorming.
 
-**② 일반적인 코딩 업무** — 함수 작성, 코드 오류 수정, 간단한 프로그램 개발, 기존 코드 설명, 리팩터링, 테스트 코드 작성, 데이터 처리 스크립트 제작에 알맞다.
+**② Programação comum:** funções, correção de erros, programas simples, explicação de código, refatorações, testes e scripts de processamento de dados.
 
-**③ 분석과 조사** — 주제 개요 정리, 제품·서비스 비교, 문서 내용 분석, 간단한 경쟁사 조사, 핵심 주장 추출, 장단점 비교, 분석 결과를 표나 보고서로 정리하는 데 알맞다.
+**③ Análise e pesquisa:** visões gerais, comparação de produtos e serviços, leitura de documentos, estudos simples da concorrência, extração de argumentos e apresentação estruturada de resultados.
 
-**④ 여러 단계로 이루어진 문제 해결** — 범위가 분명한 작업을 여러 단계로 나누어 수행한다. 자료를 요약한 뒤 발표문을 쓰거나, 요구사항을 분석한 뒤 코드 예시를 만들거나, 데이터를 분석한 뒤 결과를 설명하는 일이 이에 해당한다. Fable에 맡기는 장기·자율 프로젝트와는 구분한다.
+**④ Tarefas com várias etapas bem definidas:** resumir fontes e produzir uma apresentação, analisar requisitos e criar exemplos de código, tratar dados e explicar os resultados. Diferencie isso de projetos longos, abertos e autônomos, adequados a Fable.
 
-**⑤ 반복·운영 작업** — 로그 파싱, 형식 변환, 정적 파일 검사, 배포 스크립트 실행, 단순 수집에 알맞다.
+**⑤ Rotinas operacionais:** análise de logs, conversão de formatos, inspeções estáticas, scripts de deploy e coleta simples.
 
-### Sonnet을 선택할 때
+### Quando optar por Sonnet
 
-- 어떤 모델을 선택해야 할지 확실하지 않을 때 사용한다. 판단하기 어렵다면 sonnet을 기본값으로 삼는다.
-- 일상 업무를 빠르고 안정적으로 처리해야 할 때 사용한다.
-- 글쓰기, 코딩, 조사 등 여러 종류의 작업을 함께 수행할 때 사용한다.
-- 너무 단순하지도 지나치게 복잡하지도 않은 문제를 다룰 때 사용한다.
-- 속도와 결과 품질을 모두 고려해야 할 때 사용한다.
+- Quando não houver uma razão clara para outro modelo, use sonnet como padrão.
+- Quando for importante concluir atividades comuns com rapidez e estabilidade.
+- Para combinar redação, programação e pesquisa em tarefas rotineiras.
+- Para dificuldades intermediárias, sem necessidade de raciocínio excepcional.
+- Quando velocidade e qualidade tiverem importância semelhante.
 
-## Fable과 Opus를 구분하는 기준
+## Diferença entre Fable e Opus
 
-- **Fable**: 전체 작업을 계획하고 오랫동안 자율적으로 수행한다.
-- **Opus**: 범위가 정해진 복잡한 문제를 깊이 추론하고 분석한다.
+- **Fable:** planeja o trabalho inteiro e o executa autonomamente ao longo do tempo.
+- **Opus:** examina profundamente um problema complexo com limites definidos.
 
-예를 들어 논문 한 편을 깊이 비판하는 작업에는 **Opus**가 알맞고, 논문 수십 편을 검토해 연구 전략을 세우고 최종 보고서까지 만드는 작업에는 **Fable**이 알맞다. 앞 단계의 결과가 다음 단계에 영향을 주며 모델이 여러 단계를 스스로 이어 가야 한다면 Fable을 쓴다. 범위가 분명한 문제 하나를 깊이 분석해야 한다면 Opus를 쓴다.
+Criticar em profundidade um artigo específico tende a favorecer **Opus**. Revisar dezenas de artigos, desenvolver uma estratégia de pesquisa e produzir um relatório final pode favorecer **Fable**. Se o caminho muda conforme os resultados intermediários, considere Fable; se o desafio é principalmente a análise aprofundada de um problema delimitado, considere Opus.
 
-## 하네스 적용 규칙
+## Regras para aplicação em harnesses
 
-1. **업무를 기준으로 판단한다** — "중요한 에이전트니까"라는 이유로 모델을 고르지 않는다. 에이전트가 맡을 업무의 복잡도, 예상 기간, 필요한 자율성, 응답 속도를 따져 모델을 고른다.
-2. **근거 없이 같은 모델을 일괄 지정하지 않는다** — 모든 에이전트를 fable이나 opus로 지정하면 비용만 늘어난다. 에이전트마다 알맞은 모델을 고르고 그 이유를 주석으로 남긴다.
-3. **조율 계층과 실행 계층을 구분한다** — 계획과 조율을 맡는 계층(메인 세션 또는 감독자 에이전트)에 fable을 썼더라도, 그 아래 작업 에이전트에는 각 업무에 알맞은 모델을 따로 지정한다. 조율 에이전트가 fable이라고 해서 작업 에이전트까지 fable일 필요는 없다.
-4. **워크플로 단계마다 모델을 고른다** — `Workflow` 스크립트에서는 `opts.model`로 단계마다 다른 모델을 지정할 수 있다. 반복적인 수집·변환 단계에는 sonnet, 깊이 있는 검증·심사·설계 단계에는 opus, 전체 계획을 세우고 장기간 실행하는 단계에는 fable을 사용한다.
+1. **Escolha pela tarefa, não pelo status do agente.** Avalie complexidade, duração, autonomia e latência; não selecione um modelo mais caro somente porque o agente tem papel importante.
+2. **Evite uma configuração geral sem justificativa.** Atribuir fable ou opus a todos os agentes pode aumentar custos desnecessariamente. Documente o motivo da escolha de cada um.
+3. **Separe coordenação de execução.** Mesmo que a sessão principal ou o supervisor use fable, selecione para os agentes executores os modelos apropriados a suas tarefas.
+4. **Escolha por etapa do workflow.** Em `Workflow`, `opts.model` permite variar o modelo: sonnet para coleta e transformação repetitivas, opus para verificação, avaliação e arquitetura complexas, fable para planejamento e execução autônoma prolongada.
