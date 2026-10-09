@@ -1,164 +1,163 @@
-# 실행 모드 상세 안내 — 하네스 v2의 세 가지 모드
+# Modos de execução — os três mecanismos do Harness v2
 
-이 문서는 하네스 v2가 제공하는 세 가지 실행 모드의 주요 기능, 제약 사항, 선택 기준을 설명한다. `SKILL.md`의 2-1단계를 보충하는 문서다.
-
----
-
-## 목차
-
-1. [모드 A: 워크플로 조율](#1-모드-a-워크플로-조율)
-2. [모드 B: 지속형 에이전트 협업](#2-모드-b-지속형-에이전트-협업)
-3. [모드 C: 서브에이전트 위임](#3-모드-c-서브에이전트-위임)
-4. [실행 모드를 고르는 결정 트리](#4-실행-모드를-고르는-결정-트리)
-5. [v1에서 v2로 전환](#5-v1에서-v2로-전환)
+Este documento complementa a fase 2.1 de `SKILL.md` e apresenta as capacidades, limitações e critérios de escolha dos três modos de execução.
 
 ---
 
-## 1. 모드 A: 워크플로 조율
+## Sumário
 
-`Workflow` 도구로 조율 스크립트를 실행한다. 분산 실행(팬아웃), 반복, 조건 분기와 같은 제어 흐름을 모델이 그때그때 판단하지 않고 **코드**가 정한다. 따라서 같은 입력을 주면 같은 구조로 재현하기 쉽고, 많은 에이전트를 병렬로 실행하기에도 알맞다.
+1. Modo A — Orquestração por workflow
+2. Modo B — Colaboração entre agentes persistentes
+3. Modo C — Delegação a subagentes
+4. Árvore de decisão
+5. Migração da v1 para a v2
 
+---
+
+## 1. Modo A — Orquestração por workflow
+
+Execute scripts de coordenação com a ferramenta `Workflow`. O **código**, e não decisões improvisadas do modelo, determina o fluxo de controle, como fan-out, repetições e ramificações. Isso facilita reproduzir a estrutura de execução com as mesmas entradas e dimensionar o trabalho com muitos agentes.
+
+```text
+[Agente principal] → Workflow(script)
+    ├── phase('pesquisa'): pipeline(items, item => agent(...))
+    ├── phase('verificacao'): submeter cada achado à avaliação adversarial em paralelo
+    └── return { confirmed }  ← resultado final estruturado
 ```
-[메인 에이전트] → Workflow(script)
-           ├── phase('탐색'): pipeline(items, item => agent(...))
-           ├── phase('검증'): 발견한 항목마다 반박할 근거를 찾아 검증(병렬)
-           └── return { confirmed }   ← 구조화된 최종 결과
-```
 
-**주요 기능:**
-- `agent(prompt, opts)` — 서브에이전트를 실행한다. `opts.schema`에 JSON 스키마(JSON Schema)를 지정하면 스키마 검증을 마친 구조화 객체를 반환한다. 별도로 파싱할 필요가 없으며, 스키마와 맞지 않으면 자동으로 다시 시도한다. `opts.agentType`을 지정하면 `.claude/agents/`에 정의된 사용자 정의 유형을 쓸 수 있다. `opts.effort`로 추론 강도를 조절하고, `opts.isolation: 'worktree'`로 파일 변경을 격리한다.
-- `pipeline(items, stage1, stage2, ...)` — 각 항목이 여러 단계를 독립적으로 거친다. 단계 사이에 동기화 장벽이 없으므로 **다단계 작업에서는 기본으로 사용한다.**
-- `parallel(thunks)` — 모든 작업이 끝날 때까지 기다리는 동기화 장벽이다. 다음 단계에서 이전 단계의 결과 **전체**가 필요할 때만 쓴다. 중복 제거 또는 전체 개수를 기준으로 한 조기 종료가 이에 해당한다.
-- `phase(title)` / `log(msg)` — 진행 상황을 묶어서 표시하고 사용자에게 현재 작업을 알린다.
-- `budget` — 사용자가 지정한 토큰 예산(예: "+500k")과 연동한다. `budget.total`과 `budget.remaining()`을 이용해 작업 규모를 동적으로 조절한다.
-- `workflow(nameOrRef, args)` — 다른 워크플로를 한 단계까지 중첩해 실행한다. 작업을 계층적으로 위임할 때 쓴다.
+**Recursos principais:**
+- `agent(prompt, opts)`: executa subagentes. `opts.schema` valida a resposta segundo um JSON Schema e devolve um objeto estruturado sem exigir parsing adicional; em caso de saída inválida, pode tentar novamente. `opts.agentType` permite usar definições personalizadas de `.claude/agents/`. `opts.effort` configura esforço de raciocínio; `opts.isolation: 'worktree'` isola modificações.
+- `pipeline(items, stage1, stage2, ...)`: processa cada item por várias etapas independentes, sem barreira global entre etapas. **É o padrão para fluxos com várias etapas por item.**
+- `parallel(thunks)`: barreira que espera todas as tarefas. Use apenas quando a próxima etapa precisar do conjunto **completo**, como remoção global de duplicatas ou parada definida pela contagem total.
+- `phase(title)` / `log(msg)`: agrupam etapas e relatam o avanço.
+- `budget`: respeita orçamento de tokens especificado pelo usuário (por exemplo, `+500k`), consultando `budget.total` e `budget.remaining()` para ajustar a escala.
+- `workflow(nameOrRef, args)`: aninha outro workflow até um nível, permitindo delegação hierárquica.
 
-**특징:**
-- 코드가 제어 흐름을 정하므로 같은 입력이면 같은 실행 구조를 따른다.
-- 구조화 출력(`schema`)을 사용하므로 단계 사이에 스키마에 맞는 데이터를 전달할 수 있다.
-- `resumeFromRunId`로 중단한 실행을 이어 갈 수 있다. 바뀌지 않은 `agent()` 호출은 캐시된 결과를 즉시 반환하므로 일부만 다시 실행할 때 드는 비용이 적다.
-- 백그라운드에서 실행하며, 작업이 끝나면 알림을 보낸다.
+**Características:**
+- Estrutura de execução determinística para a mesma entrada.
+- Transferência de dados entre etapas por saídas validadas por `schema`.
+- `resumeFromRunId` permite retomar execuções interrompidas; chamadas `agent()` inalteradas reutilizam resultados em cache, reduzindo o custo de reexecução parcial.
+- Execução em segundo plano, com notificação ao concluir.
 
-**제약 사항:**
-- **사용자가 먼저 요청해야 한다.** 사용자가 워크플로나 여러 에이전트의 조율을 직접 요청했거나, `Workflow` 호출을 명시한 스킬을 실행한 경우에만 쓸 수 있다. 하네스가 만든 조율 스킬은 두 번째 경우에 해당한다. 다만 기본 에이전트 수는 적게 잡고, 대규모 분산 실행은 사용자가 명시적으로 요청했을 때만 사용한다.
-- 스크립트에는 순수 JavaScript만 쓸 수 있으며 TypeScript 문법은 쓸 수 없다. `Date.now()`, `Math.random()`, 인자 없는 `new Date()`는 실행 재개를 방해하므로 사용할 수 없다. 타임스탬프는 `args`로 전달한다.
-- `meta` 블록에는 리터럴만 쓸 수 있다. 변수, 함수 호출, 스프레드 문법은 허용되지 않는다.
-- 세션마다 동시에 실행할 수 있는 에이전트 수에 상한이 있다. 상한을 넘은 작업은 자동으로 대기열에 들어간다. 한 워크플로가 실행되는 동안 호출할 수 있는 전체 에이전트 수도 제한해 과도한 실행을 막는다.
-- 실패했거나 건너뛴 `agent()`는 `null`을 반환한다. `parallel()`은 호출이 실패해도 예외를 던지지 않으므로 결과에 반드시 `.filter(Boolean)`을 적용한다.
-- `parallel()` 장벽은 작업이 끝나는 시점을 맞출 뿐 끝난 뒤의 수정은 막지 않는다. 혼합 모드에서는 워크플로 단계가 끝난 뒤 `SendMessage`로 깨운 이름 있는 에이전트가 그 단계의 산출물 파일을 고칠 수 있으므로, 모드가 바뀌는 경계에서 산출물을 동결한다(`orchestrator-template.md` 템플릿 B의 4단계).
+**Limitações e cuidados:**
+- **Exige solicitação prévia do usuário.** Use quando o usuário pedir diretamente coordenação por workflow ou acionar uma skill que instrua a chamada de `Workflow`. A skill orquestradora gerada pelo Harness atende à segunda condição. Mesmo assim, mantenha poucos agentes por padrão e use grande escala somente sob solicitação explícita.
+- Scripts aceitam JavaScript puro, não TypeScript. Evite `Date.now()`, `Math.random()` e `new Date()` sem argumentos, pois prejudicam a retomada; forneça timestamps via `args`.
+- O bloco `meta` aceita somente literais; variáveis, chamadas de função e spread não são permitidos.
+- Existem limites de concorrência por sessão e de chamadas totais de agentes por workflow; tarefas excedentes aguardam em fila.
+- Chamadas `agent()` que falham ou são ignoradas retornam `null`. `parallel()` não necessariamente lança exceção; aplique `.filter(Boolean)` aos resultados.
+- A barreira `parallel()` sincroniza conclusões, mas não impede alterações posteriores. Em modo híbrido, um agente persistente acordado por `SendMessage` pode modificar artefatos já entregues. **Congele os arquivos na transição de fases** conforme a etapa 4 do modelo B em `orchestrator-template.md`.
 
-**잘 맞는 작업:** 파일 N개 또는 관점 M개처럼 목록을 미리 정할 수 있는 분산 실행, 새 항목이 없을 때까지 반복하는 방식(Loop-until-dry)과 적대적 검증, 대규모 전환·감사, 구조화된 보고서 생성
+**Indicado para:** listas conhecidas de N arquivos ou M perspectivas, busca até esgotamento, verificação adversarial, migrações e auditorias em grande escala e relatórios estruturados.
 
-**맞지 않는 작업:** 대화를 이어 가며 작업 대상을 찾아야 해서 목록을 미리 정할 수 없는 일, 중간에 사용자와 자주 상의해야 하는 일
+**Não indicado para:** descobrir o escopo progressivamente por diálogo, sem lista inicial possível, ou interações frequentes com o usuário durante a execução.
 
-> 구체적인 스크립트 기본 틀과 주의할 점은 `workflow-recipes.md`를 참고한다.
+> Veja modelos e armadilhas em `workflow-recipes.md`.
 
-## 2. 모드 B: 지속형 에이전트 협업
+## 2. Modo B — Colaboração entre agentes persistentes
 
-이름을 붙인 에이전트를 실행하고, 공유 작업 목록과 `SendMessage`로 조율한다. v1의 "에이전트 팀" 모드를 대체하는 방식이다.
+Inicie agentes identificados por nome, coordenados por lista compartilhada de tarefas e `SendMessage`. Esse modo substitui as antigas equipes explícitas da v1.
 
-**v1과 가장 큰 차이:** `TeamCreate`와 `TeamDelete`는 더 이상 존재하지 않는다. v1처럼 명시적인 팀 객체를 만들지 않으며, 세션에서 이름을 붙여 실행한 에이전트는 자동으로 구성되는 하나의 협업 그룹에 속한다.
+**Diferença fundamental para a v1:** `TeamCreate` e `TeamDelete` foram removidos. Não é necessário criar um objeto de equipe; agentes nomeados iniciados na sessão participam de um grupo colaborativo implícito.
 
-```
-[메인 에이전트(리더)]
-    ├── Agent(name: "researcher", subagent_type: "...", prompt: ...)   ← 병렬 실행
+```text
+[Agente principal (líder)]
+    ├── Agent(name: "researcher", subagent_type: "...", prompt: ...)  ← paralelo
     ├── Agent(name: "critic", ...)
-    ├── TaskCreate(작업 + 의존성) → 공유 작업 목록
-    ├── SendMessage({to: "researcher"}, ...)  ← 대화 맥락을 유지한 채 추가 지시
-    └── 완료 알림을 받음 → 결과를 모음 → 최종 정리
+    ├── TaskCreate(tarefa + dependências) → lista compartilhada
+    ├── SendMessage({to: "researcher"}, ...) ← nova instrução com contexto preservado
+    └── Receber conclusão → consolidar resultados → entregar
 ```
 
-**주요 기능:**
-- `Agent(name: ..., subagent_type: ..., model: ..., prompt: ...)` — `name`을 지정하면 `SendMessage`로 다시 호출할 수 있는 지속형 에이전트가 된다. 기본적으로 백그라운드에서 실행하며, 완료되면 알림을 보낸다. 작업이 끝날 때까지 기다려야 한다면 `run_in_background: false`를 지정한다.
-- `SendMessage({to: name})` — 앞서 실행한 에이전트가 **대화 맥락을 유지한 채** 작업을 이어 가게 한다. 결과를 주고받으며 반복해서 수정할 때 필요하다.
-- `TaskCreate` / `TaskUpdate` / `TaskList` / `TaskGet` — 작업 목록을 공유한다. 작업 사이의 의존 관계와 진행 상태를 관리하고, 감독자가 진행 상황에 따라 작업을 배정할 때 쓴다.
-- `TaskStop` — 과도하게 실행되거나 더는 필요하지 않은 백그라운드 작업을 중지한다.
+**Recursos principais:**
+- `Agent(name: ..., subagent_type: ..., model: ..., prompt: ...)`: com `name`, o agente se torna persistente e pode ser chamado novamente via `SendMessage`. Executa em segundo plano por padrão e notifica a conclusão. Para aguardar diretamente, use `run_in_background: false`.
+- `SendMessage({to: name})`: permite continuar trabalhos com o **contexto da conversa anterior**, inclusive ciclos de revisão.
+- `TaskCreate`, `TaskUpdate`, `TaskList` e `TaskGet`: compartilham dependências, estados e atribuições de tarefas.
+- `TaskStop`: encerra trabalhos em segundo plano que estejam consumindo recursos desnecessariamente.
 
-**특징:**
-- 에이전트가 이전 대화와 작업 내역을 기억하므로 "같은 세션에서 앞서 만든 초안의 2절만 고쳐 줘"와 같은 후속 요청을 처리할 수 있다.
-- 에이전트끼리 발견한 내용을 공유하고, 서로 다른 의견을 논의하며, 작업 방향을 바로 수정할 수 있다.
-- 세션이 유지되는 동안 같은 전문 에이전트를 계속 활용할 수 있다.
+**Características:**
+- Os agentes mantêm contexto, permitindo pedidos como “corrija apenas a segunda seção do rascunho que você produziu antes”.
+- Especialistas podem compartilhar descobertas, discutir conflitos e alterar rapidamente o plano.
+- Um mesmo especialista pode atuar repetidas vezes durante a sessão.
 
-**제약 사항:**
-- 메인 에이전트(리더)가 직접 조율하므로 에이전트가 많을수록 리더에게 작업이 몰린다. 에이전트 수는 3~5명이 적당하다.
-- 위임 단계를 깊게 중첩하면 응답이 늦어지고 대화 맥락이 손실되기 쉽다. 두 단계 안에서 위임하기를 권장한다.
-- 서브에이전트를 한 번만 호출할 때보다 토큰이 더 많이 든다.
-- 이름 있는 에이전트는 완료를 보고한 뒤에도 메시지를 받으므로, 다른 에이전트의 뒤늦은 질문에 답하다가 이미 넘긴 산출물을 고칠 수 있다. 다음 단계가 그 산출물을 읽는다면 단계 경계에서 산출물을 동결한다. 동결 절차는 `orchestrator-template.md` 템플릿 B의 4단계에 있다.
+**Limitações:**
+- O agente principal concentra a coordenação; com muitos agentes, seu trabalho cresce. Em geral, prefira 3–5 especialistas.
+- Hierarquias muito profundas aumentam latência e risco de perda de contexto. Limite a delegação a dois níveis.
+- Costuma consumir mais tokens que uma única chamada pontual.
+- Agentes persistentes podem receber mensagens depois de comunicar conclusão e **alterar artefatos já entregues**. Antes de outra fase ler os arquivos, congele-os; veja a etapa 4 do modelo B em `orchestrator-template.md`.
 
-**잘 맞는 작업:** 작성자와 검증자가 결과를 주고받으며 반복해서 수정하는 일, 서로 맞지 않는 데이터를 논의해 하나로 합치는 일, 감독자가 진행 상황에 따라 작업을 배정하는 일, 세션 내내 전문 에이전트가 필요한 일
+**Indicado para:** ciclos de Produção–Revisão, negociação de divergências de dados, redistribuição dinâmica de tarefas por supervisor e trabalhos que exigem um especialista ao longo da sessão.
 
-**맞지 않는 작업:** 결과만 받으면 되는 일회성 작업, 작업 목록을 미리 정할 수 있는 대규모 분산 실행
+**Não indicado para:** consultas pontuais com resultado único ou processamento em massa de uma lista conhecida.
 
-## 3. 모드 C: 서브에이전트 위임
+## 3. Modo C — Delegação a subagentes
 
-`Agent` 도구를 한 번만 호출해 서브에이전트에 맡기는 방식이다. 결과만 메인 에이전트에 돌아오며 에이전트끼리 통신하지 않는다.
+Faça chamadas pontuais com `Agent`; o resultado volta ao agente principal, mas os subagentes não mantêm comunicação entre si.
 
+```text
+[Agente principal] → Agent(subA) ─┐
+                  → Agent(subB) ─┼→ paralelo, normalmente em segundo plano
+                  → Agent(subC) ─┘  → conclusão → consolidação
 ```
-[메인 에이전트] → Agent(서브A) ─┐
-                → Agent(서브B) ─┼→ (병렬, 기본값은 백그라운드 실행) → 완료 알림을 받음 → 결과를 모음
-                → Agent(서브C) ─┘
-```
 
-**특징:**
-- 실행 부담이 적고 빠르다. 메인 에이전트는 요약된 결과를 받는다.
-- 서로 독립적인 호출을 **한 메시지에 묶어** 보내면 동시에 실행된다.
-- 기본적으로 백그라운드에서 실행한다. 결과를 곧바로 받아야 한다면 `run_in_background: false`를 지정한다.
-- 메인 에이전트는 이미 위임한 검색을 다시 수행하지 않고 결과를 기다린다.
+**Características:**
+- Menor custo de coordenação e execução rápida; o agente principal recebe resultados resumidos.
+- Para paralelismo real, agrupe chamadas independentes **na mesma mensagem**.
+- A execução acontece em segundo plano por padrão; para receber o resultado diretamente, use `run_in_background: false`.
+- Após delegar uma pesquisa, o agente principal não deve refazer a mesma busca enquanto aguarda os resultados.
 
-**제약 사항:**
-- 에이전트끼리 통신할 수 없고, 호출이 끝나면 대화 맥락도 이어지지 않는다. 새 작업으로 시작하려면 `name` 없이 호출한다.
-- 모든 조율은 메인 에이전트가 맡는다.
+**Limitações:**
+- Os agentes não conversam entre si e não preservam contexto após a chamada. Novas tarefas pontuais devem ser iniciadas sem `name`.
+- Toda a coordenação permanece com o agente principal.
 
-**잘 맞는 작업:** 한 번으로 끝나는 조사·수집, 필요한 전문가를 골라 결과만 받는 작업, 한 차례의 독립 검증
+**Indicado para:** pesquisa e coleta pontuais, seleção de especialistas para tarefas independentes e verificações isoladas.
 
-**맞지 않는 작업:** 결과를 주고받으며 반복해서 수정해야 하는 일, 실행 흐름을 미리 정할 수 있는 대규모 분산 작업
+**Não indicado para:** ciclos de revisão com diálogo ou grandes processamentos cujo fluxo pode ser definido em código.
 
-## 4. 실행 모드를 고르는 결정 트리
+## 4. Árvore de decisão
 
-```
-작업 목록·검증 기준·반복 조건을 미리 코드로 표현할 수 있는가?
-├── 예 → 워크플로 조율(모드 A)
-│        제어 흐름을 모델이 판단하지 않고 코드로 정한다.
-│        단, 사용자가 먼저 요청해야 한다는 조건을 지키고 에이전트 수를 필요 이상으로 늘리지 않는다.
+```text
+É possível expressar em código, antecipadamente, tarefas, validações e repetições?
+├── Sim → Modo A: workflow
+│         O código, não o modelo, governa o fluxo.
+│         Respeite a autorização do usuário e evite excesso de agentes.
 │
-└── 아니요 → 결과를 반복해서 주고받고 대화 맥락을 이어 가야 품질이 높아지는가?
-              ├── 예 → 지속형 에이전트 협업(모드 B)
-              │
-              └── 아니요 → 에이전트가 두 명 이상인가?
-                            ├── 예 → 서브에이전트 병렬 위임(모드 C)
-                            └── 아니요 → 서브에이전트 단일 호출(모드 C)
+└── Não → É necessário trocar feedback e manter contexto para garantir qualidade?
+           ├── Sim → Modo B: agentes persistentes
+           └── Não → Há mais de um agente?
+                      ├── Sim → Modo C: subagentes em paralelo
+                      └── Não → Modo C: chamada única
 ```
 
-**혼합 모드 선택:** 단계마다 위 질문의 답이 다르면 실행 모드를 섞는다. 다음 조합을 주로 쓴다.
+**Combinações de modos:** se as respostas forem diferentes entre fases, use um fluxo híbrido.
 
-| 조합 | 구성 | 예시 |
-|------|------|------|
-| 워크플로 수집 → 지속형 통합 | A → B | 자료를 대량으로 나누어 수집한 뒤, 서로 맞지 않는 데이터를 팀이 논의해 합의 |
-| 지속형 생성 → 워크플로 검증 | B → A | 팀이 초안을 만든 뒤, 발견한 항목마다 적대적 검증을 분산 실행 |
-| 서브에이전트 사전 조사 → 워크플로 본 작업 | C → A | 메인 또는 서브에이전트가 작업 목록을 먼저 파악한 뒤, 그 목록을 `args`로 워크플로에 전달 |
+| Combinação | Sequência | Exemplo |
+|---|---|---|
+| Coleta por workflow → consolidação persistente | A → B | Coletar grandes volumes em paralelo e discutir divergências antes da síntese |
+| Produção persistente → verificação por workflow | B → A | Equipe cria a primeira versão e validadores adversariais examinam cada achado |
+| Reconhecimento pontual → execução por workflow | C → A | Agente identifica previamente a lista de itens e a passa em `args` para processamento em escala |
 
-**조율 전에 목록을 확인하는 원칙:** 워크플로를 시작하기 전에 파일 목록, 검토 대상, 조사 항목을 간단히 살펴보고 작업 목록을 확정한다. 실행 전에 작업 형태를 파악하면 스크립트가 단순해지고 불필요한 작업이 줄어든다.
+**Reconhecimento antes da orquestração:** identifique previamente arquivos, objetos de análise e perspectivas para fixar a lista de trabalho. Isso simplifica scripts e evita chamadas desnecessárias.
 
-## 5. v1에서 v2로 전환
+## 5. Migração da v1 para a v2
 
-기존 v1 하네스가 만든 조율 스킬이나 에이전트 정의를 발견하면 아래 표에 따라 v2 형식으로 바꾸도록 제안한다.
+Se encontrar artefatos de agentes e orquestração da v1, proponha a adaptação:
 
-| v1 요소 | 상태 | v2 대체 |
-|---------|------|---------|
-| `TeamCreate(team_name, members)` | **제거됨** | 한 메시지에서 `Agent(name: ...)`를 병렬로 실행한다. 이름을 붙인 에이전트는 세션에서 자동으로 구성되는 협업 그룹에 속하므로 팀 객체를 따로 만들 필요가 없다. |
-| `TeamDelete` / "팀 정리" 단계 | **제거됨** | 해당 단계를 삭제한다. 에이전트는 작업을 마치면 자연스럽게 종료하며, 필요하면 `TaskStop`으로 중지한다. |
-| "세션당 한 팀만 활성화" 제약 | **형태 변경** | 명시적인 팀 객체가 없어졌으므로 v1의 제약은 적용되지 않는다. 이름을 붙인 에이전트는 세션에서 자동으로 구성되는 협업 그룹에서 함께 작업한다. |
-| `SendMessage({to: "all"})` 전체 전송 | 변경 | 필요한 상대에게만 `SendMessage`를 각각 보낸다. |
-| `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` | **불필요** | 문서와 스크립트에서 모두 제거한다. |
-| `model: "opus"`를 모든 에이전트에 강제 | 정책 폐기 | 업무 특성에 따라 모델을 각각 고른다. 판단이 애매하면 `sonnet`을 쓰고, 모델 상속은 의도적으로 선택한 경우에만 남긴다. |
-| 대규모 분산 실행을 팀으로 구성 | 개선 | `Workflow` 스크립트로 옮긴다. 코드로 제어 흐름을 정하고, 구조화 출력을 사용하며, 실행을 재개할 수 있다. |
-| 조율 스킬의 "0단계: 대화 맥락 확인" | 유지 | 기존 절차를 유지하되 워크플로 조율 모드에는 `resumeFromRunId` 옵션을 추가한다. |
-| `_workspace/` 파일 작성 규칙 | 유지 | 그대로 사용한다. |
-| `CLAUDE.md` 위치 안내와 변경 이력 | 유지 | 그대로 사용한다. |
+| Elemento v1 | Situação | Substituição v2 |
+|---|---|---|
+| `TeamCreate(team_name, members)` | **Removido** | Iniciar `Agent(name: ...)` em paralelo na mesma mensagem; agentes nomeados integram o grupo implícito da sessão |
+| `TeamDelete` e etapa “encerrar equipe” | **Removidos** | Eliminar a etapa; agentes terminam naturalmente ou podem ser interrompidos por `TaskStop` |
+| Restrição “uma equipe ativa por sessão” | **Formato alterado** | Como não há objeto explícito de equipe, a antiga restrição não se aplica |
+| Broadcast `SendMessage({to: "all"})` | Alterado | Enviar `SendMessage` individual a cada destinatário necessário |
+| `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` | **Desnecessário** | Remover das instruções e scripts |
+| `model: "opus"` obrigatório para todos | Política revogada | Escolher por natureza da tarefa; usar sonnet como padrão quando houver dúvida, ou herança somente por decisão consciente |
+| Fan-out de grande escala usando equipe | Melhorado | Migrar para `Workflow` com fluxo em código, saídas estruturadas e retomada |
+| Fase 0 de recuperação de contexto | Mantida | Acrescentar `resumeFromRunId` nos workflows |
+| Convenção de arquivos `_workspace/` | Mantida | Preservar |
+| Referências e histórico em `CLAUDE.md` | Mantidos | Preservar |
 
-**전환 절차:**
-1. 기존 조율 스킬에서 `TeamCreate`, `TeamDelete`, 전체 전송, 실험 플래그 참조를 제거한다.
-2. 분산 실행과 검증 반복 구간을 찾는다. 실행 흐름을 코드로 미리 정할 수 있다면 워크플로 조율 모드로 바꾼다.
-3. 나머지 협업 구간은 지속형 에이전트 협업 문법(`Agent(name:)` + `SendMessage` + `TaskCreate` / `TaskUpdate`)으로 다시 작성한다.
-4. 에이전트 정의에서 `model: "opus"` 일괄 지정을 제거하고, 근거가 있는 지정만 남긴다.
-5. 6단계 검증(구조 검증과 시험 실행)을 다시 수행하고 `CLAUDE.md` 변경 이력에 기록한다.
+**Procedimento:**
+1. Elimine do orquestrador chamadas a `TeamCreate`, `TeamDelete`, broadcast e flags experimentais.
+2. Localize fan-outs e ciclos de verificação. Se o fluxo puder ser expresso em código, migre para workflow.
+3. Reescreva o restante da colaboração usando `Agent(name:)`, `SendMessage`, `TaskCreate` e `TaskUpdate`.
+4. Remova a atribuição indiscriminada de `model: "opus"`, conservando apenas escolhas justificadas.
+5. Repita a fase 6 (verificações estruturais e simulações) e registre a migração no histórico de `CLAUDE.md`.
