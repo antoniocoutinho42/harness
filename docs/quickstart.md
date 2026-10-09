@@ -10,10 +10,10 @@
 
 ---
 
-## Etapa 1 — Adicionar o marketplace (30 segundos)
+## Etapa 1 — Adicionar o marketplace da tradução (30 segundos)
 
 ```
-/plugin marketplace add revfactory/harness
+/plugin marketplace add antoniocoutinho42/harness
 ```
 
 ## Etapa 2 — Instalar o plugin (30 segundos)
@@ -21,6 +21,8 @@
 ```
 /plugin install harness@harness-marketplace
 ```
+
+Para usar a versão original, o marketplace é `revfactory/harness`.
 
 **Se a instalação não aparecer:** confira com `/plugin list`. Se não estiver listado, repita a etapa 1; se estiver desativado, execute `/plugin enable harness@harness-marketplace`.
 
