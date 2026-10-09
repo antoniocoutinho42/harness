@@ -1,10 +1,10 @@
 <!-- Nome legado mantido para não quebrar links externos que apontam para README_KO.md. A documentação passou a ser mantida em português brasileiro. -->
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Versão-2.1.0-brightgreen.svg" alt="Versão">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/Licença-Apache_2.0-blue.svg" alt="Licença"></a>
+  <img src="https://img.shields.io/badge/Versao-2.1.0-brightgreen.svg" alt="Versão">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/Licenca-Apache_2.0-blue.svg" alt="Licença"></a>
   <img src="https://img.shields.io/badge/Claude_Code-Plugin-purple.svg" alt="Plugin Claude Code">
-  <img src="https://img.shields.io/badge/Modos_de_Execução-3-teal.svg" alt="3 modos de execução">
+  <img src="https://img.shields.io/badge/Modos_de_Execucao-3-teal.svg" alt="3 modos de execução">
   <img src="https://img.shields.io/badge/Padrões-6+Qualidade-orange.svg" alt="Padrões">
 </p>
 
@@ -59,10 +59,10 @@ Fase 7: Manter e evoluir por meio de /harness:evolve
 
 ## Instalação
 
-### Pelo marketplace
+### Instalar esta tradução pelo marketplace
 
 ```shell
-/plugin marketplace add revfactory/harness
+/plugin marketplace add antoniocoutinho42/harness
 /plugin install harness@harness-marketplace
 ```
 
@@ -72,6 +72,8 @@ Fase 7: Manter e evoluir por meio de /harness:evolve
 cp -r skills/harness ~/.claude/skills/harness
 cp -r skills/evolve ~/.claude/skills/harness-evolve
 ```
+
+Para instalar a versão original em inglês e coreano, o marketplace permanece em `revfactory/harness`.
 
 Não são necessárias variáveis de ambiente ou flags experimentais.
 
