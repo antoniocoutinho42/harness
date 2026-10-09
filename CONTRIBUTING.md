@@ -1,29 +1,29 @@
-# Contributing to Harness
+# Como contribuir com o Harness
 
-기여를 환영합니다. 이 문서는 짧습니다 — 규칙보다 원칙을 따릅니다.
+Contribuições são bem-vindas. Este guia é intencionalmente breve: prioriza princípios em vez de regras excessivas.
 
-## 원칙
+## Princípios
 
-1. **스킬은 에이전트를 위한 지시서다.** 사용자용 설명서·마케팅 문구·Claude가 이미 아는 일반 지식은 스킬에 넣지 않는다.
-2. **컨텍스트는 공공재다.** SKILL.md 본문 500줄 이내, 세부는 `references/`로. 모든 문장이 토큰 비용을 정당화해야 한다.
-3. **Why를 설명한다.** "ALWAYS/NEVER" 대신 이유를 쓴다. 이유를 알면 엣지 케이스에서도 올바르게 판단한다.
-4. **현행 런타임만 참조한다.** 실험 플래그, 제거된 API(`TeamCreate` 등), 특정 모델 하드코딩을 PR에 넣지 않는다. 런타임 변경으로 문서가 깨지면 그것이 최우선 수정 대상이다.
+1. **Skills são instruções para agentes.** Não inclua nas skills manuais para usuários, textos promocionais ou conhecimentos gerais que o Claude já possui.
+2. **O contexto é um recurso compartilhado.** Mantenha o corpo de `SKILL.md` com até 500 linhas e transfira detalhes para `references/`. Cada frase precisa justificar seu custo em tokens.
+3. **Explique os motivos.** Em vez de depender de `ALWAYS` e `NEVER`, justifique as regras. Conhecer o motivo permite tomar boas decisões mesmo em casos-limite.
+4. **Considere somente o runtime atual.** Não introduza em PRs flags experimentais, APIs removidas (como `TeamCreate`) nem a escolha fixa de um modelo para todos os agentes. Se uma alteração do runtime quebrar a documentação, sua correção passa a ser prioritária.
 
-## PR 체크리스트
+## Checklist para pull requests
 
-- [ ] 변경이 SKILL.md와 관련 references 간에 일관되는가 (한쪽만 고치지 않았는가)
-- [ ] 트리거에 영향을 주는 description 변경이면 should-trigger / near-miss 쿼리로 검증했는가
-- [ ] CHANGELOG.md에 항목을 추가했는가
-- [ ] 버전 정합성: `plugin.json` = `marketplace.json` = README 뱃지
+- [ ] As alterações são coerentes entre `SKILL.md` e os arquivos correspondentes em `references/`?
+- [ ] Se a mudança na `description` afetar o acionamento da skill, ela foi testada com consultas que devem acioná-la e consultas semelhantes que não devem?
+- [ ] A alteração foi registrada em `CHANGELOG.md`?
+- [ ] As versões coincidem entre `plugin.json`, `marketplace.json` e o selo do README?
 
-## 이슈
+## Issues
 
-- 버그: 재현 프롬프트 + 기대/실제 동작 + `claude --version`
-- 런타임 호환성 깨짐: `compat` 라벨 — 최우선 처리
+- Bugs: inclua o prompt para reprodução, os comportamentos esperado e observado e a saída de `claude --version`.
+- Incompatibilidade com o runtime: aplique o rótulo `compat`; prioridade máxima.
 
-## 응답 목표
+## Prazos de resposta almejados
 
-- PR 1차 응답: 72시간 이내
-- Issue 트리아지: 48시간 이내
+- Primeira resposta a PRs: até 72 horas.
+- Triagem de issues: até 48 horas.
 
-커뮤니티 약속이며 유료 SLA가 아닙니다.
+Esses prazos são compromissos com a comunidade, não um SLA comercial.
