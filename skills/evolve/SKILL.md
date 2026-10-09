@@ -1,89 +1,92 @@
 ---
 name: evolve
-description: "하네스 진화 스킬. 사용 중인 하네스의 실행 결과에 대한 피드백을 수집·일반화하여 에이전트/스킬/오케스트레이터에 반영하고, 초기 구성 대비 델타를 포착해 변경 이력을 갱신한다. '하네스 회고', '하네스 진화', '하네스 피드백 반영', '하네스 개선', '결과가 아쉬웠어 하네스 고쳐줘', '이 피드백 하네스에 반영해줘', '하네스 레슨 정리' 등 기존 하네스의 실행 경험을 바탕으로 한 개선 요청 시 반드시 이 스킬을 사용. 하네스 신규 구축·구조 재설계·에이전트 추가는 harness 스킬이 담당."
+description: "Skill para aprimorar harnesses existentes a partir das execuções realizadas. Coleta e generaliza feedback, atualiza agentes, skills e orquestradores, identifica diferenças em relação à configuração inicial e registra mudanças. Use obrigatoriamente quando o usuário pedir 'revisar o harness', 'evoluir o harness', 'incorporar feedback ao harness', 'melhorar o harness', 'o resultado ficou aquém do esperado', 'aplique esta lição no harness' ou solicitações equivalentes de melhoria baseada em execução. Para criar um harness, redesenhar sua arquitetura ou adicionar agentes, use a skill harness."
 ---
 
-# Harness Evolve — 하네스 진화 메커니즘
+# Harness Evolve — Aprimoramento contínuo do harness
 
-하네스는 고정물이 아니라 진화하는 시스템이다. 이 스킬은 "무엇이 먹혔고 무엇이 안 먹혔는가"의 델타를 포착해 하네스에 되먹여, 다음 실행이 측정 가능하게 더 나아지도록 한다.
+O harness não é uma estrutura estática: ele deve evoluir com a experiência. Esta skill identifica o que funcionou e o que não funcionou, incorpora as lições à configuração e busca tornar a próxima execução mensuravelmente melhor.
 
+```text
+Harness inicial ──▶ Uso em projetos reais ──▶ Harness atual
+                                                 │
+                                                 ▼ (identificar diferenças)
+                                          Generalizar o feedback
+                                                 │
+                                                 ▼
+                                   Atualizar agentes, skills e orquestrador
+                                                 │
+                                                 ▼
+                                   Registrar mudanças e melhorar a próxima execução
 ```
-초기 하네스 ──▶ 실 프로젝트 사용 ──▶ 현재 하네스
-                                        │
-                                        ▼ (evolve로 델타 포착)
-                                  피드백 일반화 → 에이전트·스킬·오케스트레이터 반영
-                                        │
-                                        ▼
-                                  변경 이력 갱신 → 다음 실행은 더 나은 초안에서 시작
-```
 
-## 워크플로우
+## Processo de evolução
 
-### Phase 1: 델타 수집
+### Fase 1 — Identificar diferenças e coletar evidências
 
-1. `.claude/agents/`, `.claude/skills/`, `CLAUDE.md`(변경 이력 테이블)를 읽는다
-2. git 저장소라면 하네스 파일들의 변경 이력을 조회한다 (`git log --oneline -- .claude/ CLAUDE.md`) — 초기 구성 대비 무엇이 언제 왜 바뀌었는지 파악
-3. `_workspace/`가 있으면 최근 실행의 중간 산출물을 훑어 실제 실행 흔적을 확인한다:
-   - 오케스트레이터가 정의한 경로에 산출물이 실제로 있는가 (없으면 워크플로우가 우회되었거나 죽은 코드)
-   - 산출물 품질이 스킬이 명시한 형식/기준을 따르는가
-4. 사용자에게 피드백을 요청한다 (이미 피드백을 제공했다면 생략):
-   - "결과에서 개선할 부분이 있나요?"
-   - "에이전트 구성이나 워크플로우에 바꾸고 싶은 점이 있나요?"
-   - 피드백이 없으면 강요하지 않는다. 단, 아래 관찰 신호가 있으면 선제적으로 개선을 제안한다
+1. Leia `.claude/agents/`, `.claude/skills/` e a tabela de histórico de alterações em `CLAUDE.md`.
+2. Se houver repositório Git, consulte o histórico dos arquivos do harness (`git log --oneline -- .claude/ CLAUDE.md`) para entender o que mudou, quando e por quê.
+3. Se existir `_workspace/`, examine os artefatos das últimas execuções:
+   - Os arquivos foram realmente produzidos nos caminhos definidos pelo orquestrador? Se não, o fluxo pode ter sido contornado ou conter código inativo.
+   - Os resultados atendem aos formatos e critérios de qualidade definidos nas skills?
+4. Solicite feedback ao usuário somente se ainda não tiver sido fornecido:
+   - “O que poderia ter sido melhor no resultado?”
+   - “Você mudaria algo na composição da equipe ou na ordem de execução?”
+   - Não insista na ausência de feedback. Entretanto, proponha melhorias proativamente se encontrar os sinais abaixo.
 
-**관찰 기반 진화 신호 (피드백이 없어도 제안):**
-- 같은 유형의 수정 요청이 2회 이상 반복된 흔적
-- 에이전트가 반복적으로 실패/재시도한 패턴
-- 사용자가 오케스트레이터를 우회해 수동으로 작업한 흔적 (오케스트레이터 트리거 실패 의심 → description 확장 후보)
-- 오케스트레이터에 v1 유물(TeamCreate/TeamDelete/실험 플래그)이 남아 있음 → harness 스킬의 마이그레이션 절차 안내
+**Indícios de evolução identificados por observação (mesmo sem feedback):**
+- Solicitações de correção semelhantes repetidas duas ou mais vezes.
+- Padrões recorrentes de falhas e novas tentativas dos agentes.
+- Evidências de que o usuário contornou manualmente o orquestrador; isso pode indicar falha de acionamento e necessidade de ampliar a `description`.
+- Vestígios da v1 (`TeamCreate`, `TeamDelete` ou flags experimentais); nesse caso, indique a migração pela skill `harness`.
 
-### Phase 2: 피드백 유형 분류 및 수정 대상 매핑
+### Fase 2 — Classificar o feedback e identificar o ponto de alteração
 
-| 피드백 유형 | 수정 대상 | 예시 |
-|-----------|----------|------|
-| 결과물 품질 | 해당 에이전트의 스킬 | "분석이 너무 피상적" → 스킬에 깊이 기준 추가 |
-| 에이전트 역할 | 에이전트 정의 `.md` | "보안 검토도 필요" → harness 스킬로 에이전트 추가 안내 |
-| 워크플로우 순서 | 오케스트레이터 스킬 | "검증을 먼저 해야" → Phase 순서 변경 |
-| 팀 구성 | 오케스트레이터 + 에이전트 | "이 둘은 합쳐도 될 듯" → 에이전트 병합 |
-| 트리거 누락 | 스킬 description | "이 표현으로 하면 작동 안 함" → description 확장 |
-| 실행 모드 부적합 | 오케스트레이터 | "매번 같은 팬아웃인데 느려" → 워크플로우 모드 전환 |
-| 규모/비용 | 오케스트레이터 | "토큰을 너무 써" → 기본 규모 축소, 버짓 연동 추가 |
+| Tipo de feedback | Onde alterar | Exemplo |
+|---|---|---|
+| Qualidade do resultado | Skill do agente responsável | “A análise ficou superficial” → especificar critérios de profundidade |
+| Papel do agente | Definição `.md` do agente | “Precisamos avaliar segurança” → encaminhar à skill `harness` para adicionar um agente |
+| Ordem do processo | Skill orquestradora | “A validação deveria vir antes” → reorganizar as fases |
+| Composição da equipe | Orquestrador e agentes | “Esses dois papéis podem ser reunidos” → consolidar agentes |
+| Falha de acionamento | Campo `description` da skill | “Este pedido não ativa o fluxo” → ampliar os gatilhos |
+| Modo de execução inadequado | Orquestrador | “Sempre repete o mesmo fan-out e demora” → considerar o modo workflow |
+| Escala ou custo | Orquestrador | “Consome tokens demais” → reduzir a escala padrão e vincular ao orçamento |
 
-**범위 판단:** 에이전트 신규 추가/삭제나 아키텍처 재설계가 필요하면 이 스킬에서 직접 하지 않고 harness 스킬(0단계의 기존 구성 확장 절차)로 안내한다. evolve는 **기존 구성의 조정**에 집중한다.
+**Limite de escopo:** se for necessário adicionar ou remover agentes ou redesenhar a arquitetura, não faça isso diretamente nesta skill. Encaminhe a solicitação à skill `harness`, seguindo a ampliação da configuração existente na fase 0. A skill `evolve` deve se concentrar em **ajustar a configuração atual**.
 
-### Phase 3: 일반화 및 반영
+### Fase 3 — Generalizar e incorporar as melhorias
 
-1. **피드백을 일반화한다** — 특정 사례에만 맞는 좁은 수정은 오버피팅이다. "이번 보고서에 서론이 길었다" → "서론은 전체의 10% 이내로"가 아니라, 왜 길어졌는지(스킬에 분량 배분 기준 부재)를 찾아 원리 수준으로 수정한다
-2. **Why를 함께 기록한다** — 수정된 지시에는 이유를 병기한다. 이유를 알면 에이전트가 엣지 케이스에서도 올바르게 판단한다
-3. 변경은 한 번에 하나씩 적용하고, 각 변경 직후 Phase 4를 실행한다
-4. **퇴행 방지:** 수정이 기존 변경 이력의 이전 수정을 되돌리는 방향이면, 사용자에게 상충을 알리고 확인받는다 (과거에 "너무 길다"로 줄였는데 이번에 "너무 짧다"면 — 둘 다 만족하는 기준을 찾는 것이 정답이다)
-5. **기존 파일의 언어를 유지한다** — 에이전트·스킬·오케스트레이터·`CLAUDE.md`에 반영하는 문장은 수정 대상 파일에 이미 쓰인 언어로 쓴다. 이 스킬 문서가 한국어라는 이유로 다른 언어로 된 하네스에 한국어 문장을 섞지 않는다
+1. **Generalize o feedback.** Uma regra específica demais para um caso é sobreajuste. Se “a introdução deste relatório ficou longa”, não imponha automaticamente “toda introdução terá no máximo 10% do texto”. Identifique a causa (por exemplo, ausência de critérios para distribuição do conteúdo) e corrija o princípio.
+2. **Registre a justificativa.** Inclua o motivo das mudanças nas instruções revisadas, permitindo que agentes decidam bem também em situações excepcionais.
+3. Aplique **uma alteração por vez** e execute a fase 4 após cada uma.
+4. **Evite regressões.** Se uma alteração contrariar uma decisão anterior, informe o conflito e peça confirmação. Por exemplo, diante de feedbacks alternados de “longo demais” e “curto demais”, encontre um critério que considere ambos, em vez de simplesmente reverter a decisão.
+5. **Respeite o idioma dos arquivos existentes.** Ao editar agentes, skills, orquestradores ou `CLAUDE.md`, use o idioma já adotado em cada arquivo. O idioma deste documento não deve contaminar conteúdos escritos em outro idioma.
 
-### Phase 4: 변경 이력 갱신 및 검증
+### Fase 4 — Atualizar o histórico e validar
 
-1. CLAUDE.md의 **변경 이력** 테이블에 기록한다:
+1. Registre a alteração na tabela de **Histórico de alterações** de `CLAUDE.md`:
 
 ```markdown
-**변경 이력:**
-| 날짜 | 변경 내용 | 대상 | 사유 |
-|------|----------|------|------|
-| 2026-07-19 | 톤 가이드 추가 | skills/content-creator | "너무 딱딱하다" 피드백 |
+**Histórico de alterações:**
+| Data | Alteração | Arquivo ou componente | Motivo |
+|---|---|---|---|
+| 2026-07-19 | Acrescentado guia de tom | skills/content-creator | Feedback de que o texto estava formal demais |
 ```
 
-2. 수정된 파일의 구조를 검증한다 (frontmatter, 참조 일관성)
-3. description을 수정했다면 트리거 검증 (should-trigger + near-miss 각 3개 이상)
-4. CLAUDE.md와 실제 파일의 일치 여부 최종 확인
+2. Valide a estrutura dos arquivos modificados (frontmatter e consistência das referências).
+3. Se a `description` tiver mudado, verifique o acionamento com pelo menos três casos positivos (*should-trigger*) e três casos semelhantes que não devem acionar a skill (*near-miss*).
+4. Confirme a correspondência entre `CLAUDE.md` e os arquivos existentes.
 
-### Phase 5: 진화 보고
+### Fase 5 — Relatar a evolução
 
-사용자에게 보고한다:
-- 포착된 델타 요약 (초기 구성 → 현재)
-- 이번에 반영한 변경과 그 일반화 근거
-- 반영하지 않기로 한 피드백과 이유 (있다면)
-- 다음 실행에서 기대되는 개선점
+Informe ao usuário:
+- Resumo das diferenças identificadas (configuração inicial → atual).
+- Alterações implementadas e fundamentos das generalizações.
+- Feedbacks não incorporados, com justificativa, se houver.
+- Melhorias esperadas na próxima execução.
 
-## 원칙
+## Princípios
 
-- **델타는 자산이다** — 변경 이력이 쌓일수록 같은 도메인의 다음 하네스 구축이 "출시 상태에 더 가까운 초안"에서 시작된다. 이력을 지우지 않는다
-- **일반화 없는 반영 금지** — 사례 하나에 규칙 하나를 1:1로 추가하면 스킬이 규칙 더미가 된다. 원리로 압축한다
-- **한 번에 하나씩** — 여러 변경을 몰아서 적용하면 어떤 변경이 효과였는지 알 수 없게 된다
+- **A evolução acumulada é um ativo.** Um bom histórico faz com que o próximo harness no mesmo domínio comece mais próximo de um sistema pronto para uso. Não apague esse histórico.
+- **Não incorpore feedback sem generalizá-lo.** Acrescentar uma regra para cada caso isolado torna a skill um acúmulo incoerente de exceções; converta observações em princípios.
+- **Uma mudança de cada vez.** Alterações simultâneas dificultam atribuir os resultados a cada decisão.
