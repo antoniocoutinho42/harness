@@ -107,7 +107,7 @@ Crie definições personalizadas apenas para especialistas recorrentes. Se um tr
 
 #### Conferir sobreposição com agentes existentes
 
-Antes de criar um agente, verifique se algum arquivo em `<projeto>/.claude/agents/` já define papel semelhante. Faça essa verificação mesmo ao adicionar um agente sem repetir a fase 1. Execuções sucessivas podem acumular agentes com nomes diferentes e funções equivalentes. Reutilize ou amplie o agente existente, salvo se a especialização de domínio justificar a separação. Consulte “Projeto para reutilização de agentes”, em `references/team-patterns.md`.
+Antes de criar um agente, verifique se algum arquivo em `<projeto>/.claude/agents/` já define papel semelhante. Faça essa verificação mesmo ao adicionar um agente sem repetir a fase 1. Execuções sucessivas podem acumular agentes com nomes diferentes e funções equivalentes. Reutilize ou amplie o agente existente, salvo se a especialização de domínio justificar a separação. Consulte “Reutilizar agentes”, em `references/team-patterns.md`.
 
 #### Escolher o modelo por agente
 
@@ -134,7 +134,7 @@ Já os agentes que **modificam** artefatos precisam de Edit **e** Write. Sem Edi
 
 No corpo da definição, descreva papel central, princípios de trabalho, contratos de entrada e saída, tratamento de erros e forma de colaboração. Para agentes persistentes, acrescente `## Regras de comunicação`, indicando destinatários de `SendMessage` e o uso da lista compartilhada de tarefas.
 
-> Estrutura completa, exemplos e cuidados ao restringir `tools`: `references/team-patterns.md`, seção “Estrutura das definições de agentes”.
+> Estrutura completa, exemplos e cuidados ao restringir `tools`: `references/team-patterns.md`, seção “Estrutura da definição de agentes”.
 
 #### Incluir um agente de QA
 
@@ -149,7 +149,7 @@ Escreva as instruções de cada agente em `<projeto>/.claude/skills/{name}/SKILL
 
 #### 4.0. Verificar skills já existentes
 
-Antes de criar uma skill, procure capacidades equivalentes em `<projeto>/.claude/skills/`. Se houver sobreposição, conecte a skill existente ao novo agente ou amplie-a. Consulte os critérios e as exceções para especialização em “Projeto para reutilização de skills”, em `references/skill-writing-guide.md`.
+Antes de criar uma skill, procure capacidades equivalentes em `<projeto>/.claude/skills/`. Se houver sobreposição, conecte a skill existente ao novo agente ou amplie-a. Consulte os critérios e as exceções para especialização em “Projetar skills reutilizáveis”, em `references/skill-writing-guide.md`.
 
 #### 4.1. Estrutura de diretórios
 
