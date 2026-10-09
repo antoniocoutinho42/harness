@@ -1,150 +1,158 @@
-# Changelog
+# Histórico de versões
 
-이 프로젝트는 [Semantic Versioning](https://semver.org/)을 따릅니다.
+Este projeto segue o [Versionamento Semântico](https://semver.org/).
 
-## [2.1.0] - 2026-09-26
+## [Não publicado] — Localização em português brasileiro
 
-### Changed
+### Alterado
 
-- **모델 정책 개편: "세션 모델 상속 기본" → "업무 특성 기반 티어 선택"** — 에이전트를 정의할 때 업무의 복잡도·작업 기간·자율성·응답 속도 4가지 기준으로 fable(계획을 세워 장기간 자율 실행하는 최고 난도 업무) / opus(설계·코드 생성·복잡한 분석·교차 검증) / sonnet(로그 분석·형식 변환·단순 수집 같은 일상 업무)을 에이전트별로 고르도록 변경. 애매하면 sonnet, 근거 없는 일괄 지정 금지 원칙 유지
-- **스킬 문장 정리** — harness 스킬 본문과 레퍼런스 9종의 번역투를 걷어내고 용어를 통일
-- **버전 정합성 2.1.0 동기화** — `.claude-plugin/plugin.json`·`marketplace.json`·README 뱃지(EN/KO)를 2.1.0으로 통일
+- Tradução editorial das skills principais e de seus nove documentos de referência para português brasileiro, com preservação de nomes de ferramentas, comandos, schemas, identificadores e caminhos.
+- Localização dos guias de instalação, manutenção e contribuição, templates de issues e metadados públicos do plugin.
+- Adequação dos prompts de exemplos à linguagem natural em português, sem tradução de identificadores de código e de contratos de integração.
 
-### Added
+## [2.1.0] — 2026-09-26
 
-- **`references/model-selection-guide.md`** — 티어별 핵심 역할·적합 업무·선택 상황, 티어 구분 기준, 하네스 적용 규칙(업무 단위 판단, 계층 분리, 워크플로 단계별 적용) 상세 가이드
-- **생성물 언어 규칙** — 생성하는 에이전트·스킬·오케스트레이터는 스킬 문서의 언어가 아니라 사용자가 대화에 쓰는 언어로 작성 (#28)
-- **단계 경계 산출물 동결** — 지속형 에이전트 협업에서 다음 단계를 시작하기 전에 완료 보고를 모두 확인하고, 동결을 알리고, 산출물 해시를 기록해 최종 검증에서 다시 확인 (#53)
-- **에이전트·스킬 중복 검토** — 새 에이전트·스킬을 만들기 전에 기존 것과 겹치는지 확인하고, 겹치면 기존 것을 확장. v1.x에 병합된 기여(#17)를 v2 구조로 이식
+### Alterado
 
-### Fixed
+- **Política de modelos: de “herdar o modelo da sessão por padrão” para “escolher o nível conforme a tarefa”.** Ao definir um agente, considerar quatro dimensões: complexidade, duração, autonomia e latência. Usar fable para planejamento e execução autônoma prolongada de altíssima dificuldade; opus para arquitetura, programação, análises complexas e verificações cruzadas; e sonnet para rotinas como logs, conversões de formato e coleta simples. Usar sonnet em caso de dúvida e não impor um modelo único sem justificativa.
+- **Revisão editorial das skills.** Eliminação de expressões artificiais de tradução e padronização de termos na skill Harness e nos nove arquivos de referência.
+- **Sincronização da versão 2.1.0.** Alinhamento de `.claude-plugin/plugin.json`, `marketplace.json` e selos dos READMEs em inglês e coreano.
 
-- **다시 시도해도 소용없는 실패 구분** — 사용량 한도 소진·인증 만료·권한 거부는 재시도하지 않고, 부분 산출물로 진행 정도를 확인해 누락을 파일로 기록하고 보고. 오케스트레이터는 확인한 사실만 대신 반영하고 에이전트의 판단은 추측해 채우지 않음 (#53)
-- **`tools:` 지정 시 주의 사항** — 산출물을 고치는 에이전트에 Edit가 빠지는 문제, 지연 로딩 도구가 주입되지 않을 수 있는 문제 (#53)
-- **설치 명령 오류** — README·quickstart의 `harness@harness`를 `harness@harness-marketplace`로 수정 (#46)
-- **marketplace 소유자 이메일** — v2 브랜치에서 빈 값으로 돌아간 `owner.email`을 main의 값으로 유지
+### Adicionado
 
-## [2.0.0] - 2026-07-19
+- **`references/model-selection-guide.md`.** Guia detalhado sobre papéis e usos de cada modelo, critérios para diferenciá-los e regras de aplicação no harness, incluindo seleção por tarefa, separação entre coordenação e execução e escolha por etapa de workflow.
+- **Regra de idioma dos artefatos.** Agentes, skills e orquestradores gerados devem adotar o idioma da conversa do usuário, não o idioma em que a documentação da skill foi escrita (#28).
+- **Congelamento de artefatos nas transições de fase.** Na colaboração entre agentes persistentes, todos devem confirmar conclusão antes do início da próxima fase. O líder comunica o congelamento, registra hashes e os confere novamente na validação final (#53).
+- **Detecção de agentes e skills redundantes.** Antes de criar novos, identificar responsabilidades existentes e ampliá-las quando houver sobreposição. Adaptação à v2 de contribuição incorporada à v1.x (#17).
 
-전면 재구축 (ground-up rebuild). v1의 전제였던 실험적 Agent Teams API가 현행 Claude Code에서 사라졌고, 결정적 오케스트레이션을 위한 Workflow 도구가 새로 추가된 환경 변화에 맞춰 모든 것을 다시 설계했다.
+### Corrigido
 
-### Breaking / Fixed
+- **Tratamento de falhas irrecuperáveis.** Limite de uso esgotado, autenticação expirada e permissão negada não devem causar novas tentativas automáticas. O sistema deve examinar artefatos parciais, registrar lacunas e informar o avanço real. O orquestrador só pode completar fatos verificados, sem inventar julgamentos de agentes interrompidos (#53).
+- **Cuidados com o campo `tools:`.** Alertas sobre falta de Edit em agentes que editam arquivos e sobre ferramentas carregadas sob demanda que podem não estar disponíveis (#53).
+- **Comandos de instalação.** Correção de `harness@harness` para `harness@harness-marketplace` no README e no início rápido (#46).
+- **E-mail do responsável no marketplace.** Preservação de `owner.email` da branch principal, evitando campo vazio na v2.
 
-- **`TeamCreate`/`TeamDelete`/`team_name` 전면 제거** — 현행 런타임에 존재하지 않는 API. 세션의 단일 암묵 팀 + `Agent(name:)` + `SendMessage` 구조로 전 템플릿 재작성. v1 오케스트레이터는 이 API를 호출하다 단일 에이전트 실행으로 조용히 퇴화하는 실질적 브로큰 상태였다
-- **`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 의존 제거** — 플래그 안내 문서(`docs/experimental-dependency.md`) 및 모든 참조 삭제. v2는 플래그 없이 동작한다
-- **`model: "opus"` 전 에이전트 강제 정책 폐기** — 세션 모델 상속이 기본. 오버라이드는 근거(기계적 작업의 비용 절감 / 최고 난도 검증)가 있을 때만 명시
-- **README-실체 불일치 해소** — v1 README가 홍보하던 `/harness:evolve` 스킬이 실제로는 존재하지 않았다. v2에서 실제 스킬로 출시
-- **"세션당 한 팀" 제약 및 팀 재구성 절차 삭제** — 제약 자체가 소멸
+## [2.0.0] — 2026-07-19
 
-### Added
+Reconstrução integral para o runtime multiagente atual do Claude Code. A API experimental de Agent Teams utilizada pela v1 deixou de existir e foi acrescentada a ferramenta `Workflow`, voltada à orquestração determinística.
 
-- **3중 실행 모드 체계** — 워크플로우 오케스트레이션(신규) / 퍼시스턴트 에이전트 협업(v1 팀 모드 대체) / 서브에이전트 위임. 모드 선택 기준을 "팀 크기"에서 **"제어 흐름의 결정성"**으로 재정의
-- **워크플로우 오케스트레이션 모드** — `Workflow` 도구 기반: `pipeline()`/`parallel()`, 구조화 출력 스키마(파싱 불필요), `budget` 연동 규모 조절, `resumeFromRunId` 부분 재실행, 커스텀 `agentType`, `isolation: worktree`
-- **품질 패턴 카탈로그** — 적대적 검증, 관점 분산 검증, 심판 패널, loop-until-dry, 다각 스윕, 완전성 비평가, 침묵 상한 금지
-- **`skills/evolve` (`/harness:evolve`)** — 델타 수집 → 피드백 유형 분류 → 일반화 반영 → 변경 이력 갱신 → 진화 보고의 5단계 진화 스킬. 관찰 기반 진화 신호(반복 피드백, 오케스트레이터 우회 흔적) 감지 포함
-- **v1 → v2 마이그레이션 경로** — Phase 0에서 v1 산출물 자동 감지, `docs/migration-v1-to-v2.md` + `references/execution-modes.md`에 변환 매핑 표
-- **신규 레퍼런스** — `execution-modes.md`(3중 모드 + 마이그레이션), `workflow-recipes.md`(스크립트 스켈레톤 6종 + 함정 12종 체크리스트)
-- **데이터 전달 프로토콜에 "구조화 반환" 추가** — 워크플로우 schema 기반 타입 안전 전달을 v2 권장 기본으로
-- **워크플로우 기반 A/B 테스트** — 스킬 검증(with/without)을 워크플로우 스크립트로 구성하는 레시피
-- **에이전트 정의 확장** — 프론트매터 `tools`(읽기 전용 리뷰어 등 도구 제한), `재호출 지침` 섹션 표준화
+### Incompatibilidades resolvidas e correções
 
-### Changed
+- **Remoção de `TeamCreate`, `TeamDelete` e `team_name`.** Reescrita dos modelos para a equipe implícita da sessão, com `Agent(name:)` e `SendMessage`. O orquestrador v1 podia tentar utilizar APIs inexistentes e, silenciosamente, degradar para um único agente.
+- **Fim da dependência `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`.** Remoção de `docs/experimental-dependency.md` e das referências à flag; a v2 funciona sem ela.
+- **Fim da imposição geral de `model: "opus"`.** Na v2.0.0, passou-se a herdar o modelo da sessão por padrão, aceitando sobrescrita justificada por economia em tarefas mecânicas ou raciocínio de alto nível. Essa regra seria refinada na v2.1.0.
+- **Coerência entre README e implementação.** A skill `/harness:evolve`, antes anunciada mas inexistente, foi efetivamente entregue.
+- **Remoção da regra “uma equipe ativa por sessão” e dos procedimentos de recriação.** A restrição deixou de existir no novo modelo.
 
-- **6패턴 각각에 v2 권장 실행 모드 매핑** — 팬아웃/파이프라인은 워크플로우 1순위, 감독자는 퍼시스턴트+태스크, 계층 위임은 워크플로우 1단계 중첩 등
-- **오케스트레이터 템플릿 3종 전면 재작성** — A: 워크플로우(정찰→실행→종합, run_meta/resume 포함), B: 퍼시스턴트(스폰+태스크+피드백 루프), C: 서브에이전트
-- **Phase 7 재구성** — 운영/유지보수는 harness 스킬에 유지, 진화(피드백 반영)는 evolve 스킬로 분리
-- 산출물 체크리스트에 v1 잔재 검증·워크플로우 함정 검증 항목 추가
-- `references/agent-design-patterns.md` → `team-patterns.md`로 개편 (품질 패턴 흡수), `team-examples.md` 5종 예시를 v2 문법으로 재작성
+### Adicionado
 
-### Removed
+- **Três modos de execução.** Orquestração por workflow (novo), colaboração entre agentes persistentes (substituindo a antiga equipe) e delegação a subagentes. Critério de escolha passou do tamanho da equipe para a **determinabilidade do fluxo de controle**.
+- **Orquestração por workflow.** Scripts com `pipeline()` e `parallel()`, schemas de saídas estruturadas, dimensionamento vinculado a `budget`, retomada parcial por `resumeFromRunId`, `agentType` personalizado e `isolation: worktree`.
+- **Catálogo de padrões de qualidade.** Verificação adversarial, verificação por perspectivas, painel de avaliadores, busca até esgotamento, varredura por vários critérios, revisão de omissões e transparência sobre itens excluídos.
+- **`skills/evolve` (`/harness:evolve`).** Ciclo de cinco etapas: identificar diferenças, classificar feedback, generalizar ajustes, atualizar histórico e relatar evolução. Inclui sinais observacionais, como feedback recorrente e contornos do orquestrador.
+- **Migração v1 → v2.** Identificação automática de elementos v1 na fase 0 e mapeamentos em `docs/migration-v1-to-v2.md` e `references/execution-modes.md`.
+- **Novas referências.** `execution-modes.md` (modos e migração) e `workflow-recipes.md` (seis modelos de scripts e doze pontos de atenção).
+- **Retorno estruturado nos protocolos de transferência.** Uso de `schema` para fornecer dados validados entre etapas como padrão recomendado em workflows.
+- **Testes A/B por workflow.** Receita para comparar resultados com e sem skill.
+- **Definições de agentes mais completas.** Suporte a `tools` no frontmatter para restrição de ferramentas e seção padronizada de instruções para reexecução.
 
-- **마케팅/사이트 자산 제거** — `harness_banner.png`·`harness_icon.png`·`harness_social.png`·`harness_team.png`(합계 약 9MB), `index.html`(랜딩 페이지), `privacy.html`
-- **저장소 운영 부산물 제거** — 런치 캠페인용 `_workspace/` 산출물, 마케팅 에이전트 정의(`.claude/agents/launch-strategist` 등), `docs/experimental-dependency.md`
-- README_JA (일본어 README) — 유지보수 부담 대비 효용 저조. EN/KO 2종 유지
+### Alterado
 
-## [1.2.1] - 2026-04-18
+- **Mapeamento dos seis padrões a modos da v2.** Preferência por workflows para pipeline e fan-out; supervisor persistente com tarefas compartilhadas; delegação hierárquica com aninhamento restrito.
+- **Reescrita dos três modelos de orquestração.** A: workflow com reconhecimento, execução, síntese, `run_meta` e retomada. B: agentes persistentes com comunicação e tarefas. C: delegação pontual a subagentes.
+- **Reorganização da fase 7.** A skill Harness cuida de operação e manutenção; a skill Evolve cuida de incorporar feedback.
+- **Checklist de entrega.** Novas verificações de elementos v1 e armadilhas de workflows.
+- **Referências de arquitetura.** `references/agent-design-patterns.md` foi convertido em `team-patterns.md`; cinco exemplos em `team-examples.md` foram atualizados para a v2.
 
-### Fixed
+### Removido
 
-- **버전 정합성 동기화** — README.md / README_KO.md / README_JA.md 뱃지가 `v1.0.1`, `.claude-plugin/marketplace.json`이 `1.1.0`, `.claude-plugin/plugin.json`이 `1.2.0`으로 3중 불일치 → 모두 **v1.2.0**으로 통일 (plugin.json 기준)
-- **태그드 릴리스 0건 상태 해소 준비** — v1.0.0 / v1.0.1 / v1.1.0 / v1.2.0 소급 태그 계획 작성 (`_workspace/release/audit-2026-04-18.md` §4 참조)
+- **Recursos de marketing e site:** `harness_banner.png`, `harness_icon.png`, `harness_social.png`, `harness_team.png` (cerca de 9 MB), `index.html` e `privacy.html`.
+- **Artefatos operacionais internos:** resultados de campanha em `_workspace/`, agentes de marketing (`.claude/agents/launch-strategist` e outros) e `docs/experimental-dependency.md`.
+- **README_JA** em japonês, cuja manutenção não se justificava. Restaram as versões EN/KO na origem.
 
-### Added
+## [1.2.1] — 2026-04-18
 
-- **포지셔닝 선언: "harness factory"** — README 상단에 카테고리 자기 규정 문구를 도입. "에이전트 + 스킬을 도메인별로 찍어내는 하네스 팩토리"로 카테고리 선점 (단일 에이전트/프롬프트 프레임워크 대비 차별화)
-- **CONTRIBUTING.md** — 기여 가이드 및 SLA 명시 (PR 1차 응답 72h, Issue triage 48h). 커뮤니티 온보딩 장벽 해소
-- **docs/ 디렉토리** — 장기 문서(아키텍처, 마이그레이션, 패턴 카탈로그) 이전 공간 신설. README 비대화 방지 및 검색성 향상
-- **Issue #3 응답 정책** — 커뮤니티 이슈에 대한 공식 응답 템플릿 및 트리아지 프로세스 추가
+### Corrigido
 
-### Changed
+- **Coerência entre versões.** Os selos de README.md, README_KO.md e README_JA.md indicavam `v1.0.1`, enquanto `.claude-plugin/marketplace.json` indicava `1.1.0` e `.claude-plugin/plugin.json`, `1.2.0`. Os três foram alinhados a **v1.2.0**, considerando plugin.json como referência.
+- **Preparação para tags de versões anteriores.** Foi criado um plano para registrar retroativamente v1.0.0, v1.0.1, v1.1.0 e v1.2.0, já que não existiam releases marcadas (`_workspace/release/audit-2026-04-18.md`, seção 4).
 
-- `.claude-plugin/marketplace.json` version: `1.1.0` → `1.2.0`
-- README 뱃지 (EN/KO/JA 3종): `Version-1.0.1` → `Version-1.2.0`
-- **`.claude-plugin/plugin.json` description 재작성** — `"Agent Team & Skill Architect — Meta-skill that designs..."` → `"The team-architecture factory for Claude Code — a meta-skill that turns a domain description into an agent team and the skills they use, with six pre-defined team-architecture patterns..."` (EN+KO 병기, L3 Meta-Factory 포지셔닝 반영)
-- **`.claude-plugin/plugin.json` keywords 확장** — 5개 → 17개 (`harness-factory`, `team-architecture-factory`, `claude-code-plugin`, `agent-scaffolding`, `multi-agent`, 6패턴 키워드 6종 추가)
+### Adicionado
 
-## [1.2.0] - 2026-04-08
+- **Posicionamento como “harness factory”.** Descrição de categoria no início do README para diferenciar a proposta de gerar agentes e skills por domínio de frameworks para prompts ou agentes isolados.
+- **CONTRIBUTING.md.** Guia de contribuições e metas de resposta (72 horas para primeira resposta em PRs e 48 horas para triagem de issues).
+- **Pasta docs/.** Local previsto para documentação de longa duração (arquitetura, migração e catálogo de padrões), evitando que o README ficasse excessivamente extenso.
+- **Política de resposta para issue #3.** Modelo de respostas oficiais e processo de triagem de assuntos da comunidade.
 
-### Changed
+### Alterado
 
-- **CLAUDE.md 등록 정책 간소화 (중복 제거)** — Phase 5-4 "컨텍스트 등록"을 "포인터 등록"으로 전환. 에이전트 목록·스킬 목록·디렉토리 구조·실행 규칙 상세를 CLAUDE.md에서 제거하고 **트리거 규칙 + 변경 이력**만 남김. 에이전트/스킬 목록은 `.claude/agents/`, `.claude/skills/` 및 오케스트레이터 스킬에서 단일 출처로 관리
-- **Phase 3/4 임시 동기화 단계 삭제** — CLAUDE.md 동기화 부담을 줄이기 위해 Phase 3/4의 임시 동기화 지시 제거. 최종 포인터 등록은 Phase 5-4에서 1회만 수행
-- **핵심 원칙 3번 재정의** — "CLAUDE.md에 하네스 컨텍스트를 등록한다" → "CLAUDE.md에 하네스 포인터를 등록한다"
-- **CLAUDE.md vs 오케스트레이터 역할 분담표 삭제** — 포인터 정책으로 단순화되어 표 자체가 불필요해짐
+- Versão de `.claude-plugin/marketplace.json`: `1.1.0` → `1.2.0`.
+- Selos dos READMEs em inglês, coreano e japonês: `Version-1.0.1` → `Version-1.2.0`.
+- **Descrição de `.claude-plugin/plugin.json`.** Evolução de `"Agent Team & Skill Architect — Meta-skill that designs..."` para uma descrição de fábrica de equipes de agentes, com seis padrões e posicionamento como metafábrica. A versão original combinava inglês e coreano.
+- **Palavras-chave de `.claude-plugin/plugin.json`.** Expansão de cinco para 17, incluindo `harness-factory`, `team-architecture-factory`, `claude-code-plugin`, `agent-scaffolding`, `multi-agent` e seis termos de padrões.
 
-### Added
+## [1.2.0] — 2026-04-08
 
-- **Phase 2-1: 하이브리드 실행 모드** — 에이전트 팀 / 서브 에이전트에 더해 Phase별로 모드를 섞는 하이브리드 패턴 추가. 자주 쓰이는 조합(병렬 수집→합의 통합, 팀 생성→검증, Phase 간 팀 재구성) 명시
-- **Phase 2-1 실행 모드 비교표** — 팀/서브/하이브리드 3종 특성 및 의사결정 순서 3단계 제공
-- **Phase 5-0 하이브리드 오케스트레이터 패턴** — 하이브리드 구성 시 각 Phase 상단에 실행 모드를 명시하는 규칙
-- **Phase 5-1 반환값 기반 데이터 전달** — 서브 에이전트 모드 전용 데이터 전달 전략 추가 (기존 메시지/태스크/파일 + 반환값)
-- **Phase 5-1 권장 조합 (서브/하이브리드)** — 팀 모드 외 서브 모드와 하이브리드에서의 데이터 전달 권장 조합 명시
+### Alterado
 
-## [1.1.0] - 2026-04-05
+- **Simplificação do registro em `CLAUDE.md`.** Na fase 5.4, “registrar contexto” virou “registrar referência”. Foram removidas de `CLAUDE.md` listas de agentes e skills, diretórios e regras detalhadas, preservando apenas **gatilhos e histórico**. Arquivos de agentes, skills e a skill orquestradora passaram a ser a fonte única.
+- **Remoção de sincronizações provisórias nas fases 3 e 4.** Em vez de atualizar `CLAUDE.md` em cada criação de artefato, a referência final passou a ser registrada uma única vez na fase 5.4.
+- **Terceiro princípio fundamental.** Mudança de “registrar o contexto do harness em `CLAUDE.md`” para “registrar uma referência do harness”.
+- **Remoção da tabela de responsabilidades `CLAUDE.md` versus orquestrador.** A nova política de referência mínima tornou a tabela desnecessária.
 
-### Added
+### Adicionado
 
-- **Phase 0: 현황 감사** — 트리거 시 기존 하네스 상태를 먼저 확인하고 신규 구축/기존 확장/운영·유지보수 3분기로 라우팅
-- **기존 확장 Phase 선택 매트릭스** — 에이전트 추가/스킬 추가/아키텍처 변경별 필요 Phase를 명시한 결정표
-- **Phase 3/4 CLAUDE.md 임시 동기화** — 에이전트·스킬 생성 직후 CLAUDE.md에 즉시 반영 (세션 중단 내성)
-- **Phase 5-4: CLAUDE.md 하네스 컨텍스트 등록** — 에이전트 팀 구조·스킬 목록·실행 규칙·디렉토리 구조·변경 이력을 기록. CLAUDE.md vs 오케스트레이터 역할 분담표 포함
-- **Phase 5-5: 후속 작업 지원** — 오케스트레이터 description에 후속 키워드 필수 포함, Phase 0 컨텍스트 확인 단계로 초기/부분재실행/새실행 자동 판별
-- **Phase 5 오케스트레이터 수정 경로** — 기존 확장 시 오케스트레이터를 새로 만들지 않고 수정하는 가이드
-- **Phase 7: 하네스 진화 메커니즘** — 실행 후 피드백 수집 → 피드백 유형별 수정 대상 매핑 → 변경 이력 기록 → 자동 진화 트리거
-- **Phase 7-5: 운영/유지보수 워크플로우** — 현황 감사→점진적 수정→CLAUDE.md 동기화→변경 검증 4단계
-- **description에 운영/유지보수 트리거** — '하네스 점검', '하네스 감사', '하네스 현황', '에이전트/스킬 동기화' 키워드
-- **산출물 체크리스트 강화** — CLAUDE.md 동기화 완료, 변경 이력 기록, Phase 0 컨텍스트 확인 항목 추가
-- 오케스트레이터 템플릿에 Phase 0 (컨텍스트 확인) 추가 — 에이전트 팀/서브 에이전트 모드 모두 적용
-- 오케스트레이터 description 템플릿에 후속 작업 키워드 패턴 포함
+- **Fase 2.1: modo híbrido.** Combinação de equipes persistentes e subagentes em fases diferentes, com exemplos como coleta paralela e consolidação, criação e verificação, e reconfiguração de equipes entre etapas.
+- **Comparação de modos na fase 2.1.** Quadro comparativo de equipes, subagentes e híbridos, com procedimento de decisão em três passos.
+- **Padrão híbrido do orquestrador na fase 5.0.** Regra para identificar o modo de execução no início de cada fase.
+- **Transferência de dados por retorno na fase 5.1.** Estratégia específica para subagentes.
+- **Combinações de transferência recomendadas na fase 5.1.** Ampliação das opções de mensagens, tarefas e arquivos para cobrir os modos de subagentes e híbridos.
 
-### Changed
+## [1.1.0] — 2026-04-05
 
-- 핵심 원칙 2개 → 4개로 확장 (CLAUDE.md 등록, 진화 시스템 추가)
-- **"진화 로그" → "변경 이력" 통일** — 이름과 스키마(4컬럼: 날짜/변경내용/대상/사유)를 전 섹션에서 일원화
-- **Phase 1 Step 3** — Phase 0 감사 결과를 기반으로 충돌 분석하도록 변경 (중복 제거)
-- **5-4 CLAUDE.md 템플릿 코드 블록** — 중첩 렌더링 깨짐 수정 (3백틱→4백틱)
-- **역할 분담표 확장** — 스킬 목록, 디렉토리 구조, 변경 이력 행 추가
-- **오케스트레이터 템플릿** — Phase 0 컨텍스트 확인 단계, 후속 작업 키워드 가이드 추가
+### Adicionado
 
-## [1.0.1] - 2026-03-28
+- **Fase 0: auditoria do estado atual.** Ao acionar a skill, verificar primeiro o harness existente e encaminhar para criação, ampliação ou manutenção.
+- **Matriz de fases para ampliação.** Definir fases necessárias conforme adição de agentes, skills ou mudanças na arquitetura.
+- **Sincronização provisória de `CLAUDE.md` nas fases 3 e 4.** Registrar os artefatos imediatamente após criá-los para resistir a interrupções.
+- **Fase 5.4: registro do contexto do harness em `CLAUDE.md`.** Composição da equipe, skills, regras, estrutura de diretórios e histórico; incluía tabela de divisão de responsabilidades.
+- **Fase 5.5: suporte a solicitações posteriores.** Gatilhos para continuação na `description` e interpretação automática de primeira execução, reexecução parcial ou nova execução.
+- **Fase 5: alteração de orquestradores existentes.** Não duplicar a skill orquestradora ao ampliar um harness.
+- **Fase 7: evolução do harness.** Coletar feedback após a execução, mapear tipos de correção a arquivos, registrar mudanças e identificar sinais de evolução.
+- **Fase 7.5: operação e manutenção.** Auditoria → alterações graduais → sincronização com `CLAUDE.md` → validação.
+- **Gatilhos de manutenção na `description`.** Expressões relativas a auditoria, estado atual e sincronização de agentes e skills.
+- **Checklist reforçado.** Verificar atualização de `CLAUDE.md`, histórico e recuperação de contexto na fase 0.
+- **Fase 0 em modelos de orquestrador.** Recuperação de contexto para equipes persistentes e subagentes.
+- **Gatilhos de continuação nos modelos de `description`.**
 
-### Changed
+### Alterado
 
-- SKILL.md ↔ references 간 중복 내용 제거 (330줄 → 285줄)
-  - Phase 2-1: 실행 모드 비교표/불릿 → 핵심 원칙 + agent-design-patterns.md 포인터
-  - Phase 2-3: 에이전트 분리 기준 불릿 → 4축 요약 + agent-design-patterns.md 포인터
-  - Phase 3: 에이전트 정의 템플릿 코드블록 → 필수 섹션 나열 + references 포인터
-  - Phase 5-2: 에러 핸들링 5행 테이블 → 핵심 원칙 + orchestrator-template.md 포인터
+- Ampliação dos princípios fundamentais de dois para quatro (registro em `CLAUDE.md` e evolução).
+- **Terminologia “log de evolução” → “histórico de alterações”.** Nome e schema de quatro colunas (data, alteração, componente e motivo) padronizados.
+- **Fase 1, passo 3.** Passou a usar o diagnóstico da fase 0 para identificar sobreposições.
+- **Modelo `CLAUDE.md` da fase 5.4.** Correção de um bloco Markdown aninhado, com quatro crases em vez de três.
+- **Tabela de responsabilidades.** Inclusão de skills, estrutura de pastas e histórico.
+- **Modelos de orquestradores.** Acrescentada fase 0 e expressões de continuação.
 
-## [1.0.0] - 2026-03-27
+## [1.0.1] — 2026-03-28
 
-### Added
+### Alterado
 
-- 6 Phase 워크플로우 기반 하네스 구성 메타 스킬
-- 6가지 에이전트 아키텍처 패턴 (파이프라인, 팬아웃/팬인, 전문가 풀, 생성-검증, 감독자, 계층적 위임)
-- 에이전트 팀 / 서브 에이전트 실행 모드 지원
-- Progressive Disclosure 기반 스킬 생성 가이드
-- 오케스트레이터 템플릿 (에이전트 팀 모드 + 서브 에이전트 모드)
-- QA 에이전트 통합 가이드 (실제 프로젝트 7개 버그 사례 기반)
-- 스킬 테스트/평가 방법론 (With-skill vs Without-skill 비교)
-- 실전 팀 구성 예시 5종 (리서치, 소설, 웹툰, 코드리뷰, 마이그레이션)
+- Eliminação de duplicações entre `SKILL.md` e `references/` (de 330 para 285 linhas).
+  - Fase 2.1: tabela de modos e lista de princípios substituídas por resumo e referência a `agent-design-patterns.md`.
+  - Fase 2.3: critérios de separação de agentes resumidos em quatro dimensões, com referência a `agent-design-patterns.md`.
+  - Fase 3: modelo completo de definição de agente substituído por seções obrigatórias e referência.
+  - Fase 5.2: tabela de cinco casos de erros substituída por princípios e referência a `orchestrator-template.md`.
+
+## [1.0.0] — 2026-03-27
+
+### Adicionado
+
+- Metaskill de configuração de harness por um processo de seis fases.
+- Seis padrões de agentes: Pipeline, Fan-out/Fan-in, Pool de Especialistas, Produção–Revisão, Supervisor e Delegação Hierárquica.
+- Modos de execução por equipes e subagentes.
+- Guia de criação de skills com *Progressive Disclosure*.
+- Modelos de orquestradores para equipes e subagentes.
+- Guia para incorporar agentes de QA com base em sete bugs observados em projetos reais.
+- Metodologia de testes de skills com comparação entre execuções com e sem a skill.
+- Cinco exemplos práticos: pesquisa, romance, webtoon, revisão de código e migração.
